@@ -41,6 +41,10 @@ The following tasks duplicate functionality from knife and may be removed in a f
 * `upload_cookbooks` - replaced by `knife cookbook upload -a`.
 * `upload_cookbook[cookbook]` - replaced by `knife cookbook upload COOKBOOK`.
 
+Running the configuration
+
+* `chef-solo -c solo.rb -j web.json` - invokes and installs the chef configuration files.
+
 Configuration
 =============
 
