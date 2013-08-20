@@ -15,6 +15,8 @@ include_recipe "php::module_mysql"
 include_recipe "apache2::mod_php5"
 include_recipe "mysql::ruby"
 
+package 'monit'
+
 package 'ntp'
 
 template '/etc/ntp.conf' do
