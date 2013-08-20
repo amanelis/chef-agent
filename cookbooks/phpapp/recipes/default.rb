@@ -15,6 +15,18 @@ include_recipe "php::module_mysql"
 include_recipe "apache2::mod_php5"
 include_recipe "mysql::ruby"
 
+package 'ntp'
+
+template '/etc/ntp.conf' do
+  source    'ntp.conf.erb'
+  notifies  :restart, 'service[ntp]'
+end
+
+service 'ntp' do
+  action [:enable, :start]
+end
+
+
 apache_site "default" do
 	enable false
 end
