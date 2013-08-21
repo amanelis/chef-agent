@@ -9,6 +9,9 @@
 		"recipe[platform]",			
 		
 		// http://fnichol.github.io/chef-user/
-		"recipe[user]" 							
+		"recipe[user]",
+
+		// https://github.com/escapestudios/chef-newrelic
+		"recipe[newrelic]"
 	]
 }
