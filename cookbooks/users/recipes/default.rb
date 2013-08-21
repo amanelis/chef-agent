@@ -52,18 +52,3 @@ user "ec2-user" do
 	manage_home true
 	password "$1$0uH39mb7$d2XVPYw0mHkuxL6mZci.10"
 end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
