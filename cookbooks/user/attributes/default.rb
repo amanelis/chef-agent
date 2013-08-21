@@ -38,5 +38,6 @@ default['user']['manage_home']        = "true"
 default['user']['create_user_group']  = "true"
 default['user']['ssh_keygen']         = "true"
 
-default['user']['data_bag_name']        = "users"
-default['user']['user_array_node_attr'] = "users"
+default['user']['ssh_keys']['shaman'] = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC4tcJpYKnsop811JWEm0zB5dxVktMumQSfKo+JZDzlWULNelsfrDnDsQ2c76NwSHkTmSTv9z7g4hbP3uRCqnj9yCH7vuryvKkvxyPeCUpoJNEbnSx+NRqTFCjghGLBul2pbOF5MuCZzgekGe1D7h/2mL2QRiB0Azp0nzb98hmAbvmAKd16dg3Jcl9+76sQDJpYhmsSQI6ePLWEtGEqYWHrkXv9pm6dpooLFU4Gd/ic3CFTgpDBz2ldFCYml3a5CO2SavvGceIzZnfs96Aaggm66SQ0ACQqWHdumbe1WXiGD7R8d8wUlfcLcDK6YHGpIdKdJymmnhagZToQ+M91iF3p shaman@shaman.local"
+
+default['user']['ssh_keys']['platform'] = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCU2BS4YVmWMU1Vh5Kiss+QQ4rivxqRVd6T1ELzjaNrKCeMBlr2wzLhB/E4Py1F02PTvxVIqMu5dQUEY73viKv4Sn/41bRybAH2NWnU86Ro/3Ud37m0DL/0uD1aC6JTq88scJtJ8cbF2Wi2dVUiVSNkv1yMh1QXynNLq/mIC9/9DlfZOqIHpEFD30hmRH9/9BZeVDsH5+MdIjn8TBn4kmFlfAsQs51YGBW0bT6Npss0F7B0uFUGq28gy3iSWHguB8PST9GiNo6R5OF5SR6wLUyFTV0+Ku8l+3+wNmKaLSxLKlm4VYRM70v3vEFPRLP5bHCvN17+zwxnWfEZ8ckjdFN3 platform"
