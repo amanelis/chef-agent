@@ -1,12 +1,12 @@
 {
 	"platform": {
-		"db_password": "212b09752d173876a84d374333ae1ffe", 
 		"server_name": "ec2-50-19-20-53.compute-1.amazonaws.com"
 	},
 	"run_list" : [
 		"recipe[apt]", 
 		"recipe[build-essential]", 
-		"recipe[java]", 
-		"recipe[platform]"
+		"recipe[java]",							// cookobooks/java/ 
+		"recipe[platform]",					// cookbooks/platform/
+		"recipe[user]" 							// http://fnichol.github.io/chef-user/
 	]
 }

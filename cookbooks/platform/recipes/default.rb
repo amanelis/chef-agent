@@ -6,7 +6,6 @@
 #
 # All rights reserved - Do Not Redistribute
 #
-
 package 'monit'
 service 'monit' do
   action [:enable, :start]
