@@ -26,29 +26,29 @@ group "play" do
   gid 501
 end
 
-user "root" do
-  action :manage
-	password "$1$0uH39mb7$d2XVPYw0mHkuxL6mZci.10"
-end
+#user "root" do
+#  action :manage
+#	password "$1$0uH39mb7$d2XVPYw0mHkuxL6mZci.10"
+#end
+#
+#user "play" do
+#	action [:create, :manage]
+#	comment "Platform user 'play'"
+#	uid 500
+#	gid 501
+#	home "/home/play"
+#	shell "/bin/bash"
+#	manage_home true
+#	password "$1$0uH39mb7$d2XVPYw0mHkuxL6mZci.10"
+#end
 
-user "play" do
-	action [:create, :manage]
-	comment "Platform user 'play'"
-	uid 500
-	gid 501
-	home "/home/play"
-	shell "/bin/bash"
-	manage_home true
-	password "$1$0uH39mb7$d2XVPYw0mHkuxL6mZci.10"
-end
-
-user "ec2-user" do
-	action [:create, :manage]
-	comment "Platform user 'ec2-user'"
-	uid 222
-	gid 500
-	home "/home/ec2-user"
-	shell "/bin/bash"
-	manage_home true
-	password "$1$0uH39mb7$d2XVPYw0mHkuxL6mZci.10"
-end
+#user "ec2-user" do
+#	action [:create, :manage]
+#	comment "Platform user 'ec2-user'"
+#	uid 222
+#	gid 500
+#	home "/home/ec2-user"
+#	shell "/bin/bash"
+#	manage_home true
+#	password "$1$0uH39mb7$d2XVPYw0mHkuxL6mZci.10"
+#end

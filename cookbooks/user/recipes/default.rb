@@ -21,7 +21,6 @@ user_account 'play' do
 	action [:create, :manage]
 	comment "Platform user 'play'"
 	uid 500
-	gid 501
 	shell "/bin/bash"
 	password "$1$D1nYxR6S$15UWt8uUDEhXggPi3p7GT1"
 	home "/home/play"
