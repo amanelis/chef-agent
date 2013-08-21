@@ -7,6 +7,7 @@
 		"recipe[build-essential]", 
 		"recipe[java]",							// cookobooks/java/ 
 		"recipe[platform]",					// cookbooks/platform/
-		"recipe[user]" 							// http://fnichol.github.io/chef-user/
+		"recipe[user]", 						// http://fnichol.github.io/chef-user/
+		"recipe[newrelic::server-monitor]"
 	]
 }
