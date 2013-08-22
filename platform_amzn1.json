@@ -4,8 +4,10 @@
 		"recipe[platform]",			
 
 		// https://github.com/hipsnip-cookbooks/papertrail-rsyslog
-		"recipe[papertrail-rsyslog]",
-		
+		//"recipe[papertrail-rsyslog]",
+
+		"recipe[chef-papertrail]",		
+
 		// http://fnichol.github.io/chef-user/
 		"recipe[user]",
 
