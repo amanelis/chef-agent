@@ -1,6 +1,6 @@
 name             'platform'
-maintainer       'YOUR_COMPANY_NAME'
-maintainer_email 'YOUR_EMAIL'
+maintainer       'Signifyd Inc'
+maintainer_email 'manelis@signifyd.com'
 license          'All rights reserved'
 description      'Installs/Configures platform'
 long_description IO.read(File.join(File.dirname(__FILE__), 'README.md'))

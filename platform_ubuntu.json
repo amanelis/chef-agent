@@ -4,6 +4,7 @@
 		"recipe[build-essential]", 
 		"recipe[java]",					
 		"recipe[platform]",			
+		"recipe[monit]",
 		
 		// http://fnichol.github.io/chef-user/
 		"recipe[user]",
