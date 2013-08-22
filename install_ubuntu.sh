@@ -15,7 +15,7 @@ if ! test -f "$chef_binary"; then
 		adduser ubuntu root
 		adduser ubuntu sudo	
 
-		# Upgrade headlessly (this is only safe-ish on vanilla systems)
+		# System upgrades and package installation
     aptitude update && apt-get -o Dpkg::Options::="--force-confnew" --force-yes -fuy dist-upgrade
 		apt-get update -y && apt-get upgrade -y && apt-get install git-core build-essential curl wget -y
 
