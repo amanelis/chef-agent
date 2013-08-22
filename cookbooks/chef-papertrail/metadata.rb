@@ -1,4 +1,4 @@
-name        'papertrail'
+name        'chef-papertrail'
 maintainer  'Sam Stokes'
 maintainer  'me@samstokes.co.uk'
 description <<-DESC

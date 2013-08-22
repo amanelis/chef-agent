@@ -1,2 +1,2 @@
-include_recipe 'papertrail::syslog'
-include_recipe 'papertrail::app'
+include_recipe 'chef-papertrail::syslog'
+include_recipe 'chef-papertrail::app'
