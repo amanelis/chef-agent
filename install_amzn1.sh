@@ -12,9 +12,7 @@ if ! test -f "$chef_binary"; then
     
 		# House keeping
 		cd ~
-		adduser ec2-user root
-		adduser ec2-user sudo	
-
+		
 		# System upgrades and package installation
 		yum update -y && yum upgrade -y
 		yum groupinstall "Development Tools" -y
