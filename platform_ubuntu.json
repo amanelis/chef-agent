@@ -3,8 +3,8 @@
 		"recipe[apt]", 
 		"recipe[build-essential]", 
 		"recipe[java]",					
-		"recipe[platform]",			
 		"recipe[monit]",
+		"recipe[platform]",			
 		
 		// https://github.com/hipsnip-cookbooks/papertrail-rsyslog
 		"recipe[papertrail-rsyslog]",

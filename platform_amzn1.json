@@ -1,5 +1,6 @@
 {
 	"run_list" : [
+		"recipe[monit]",
 		"recipe[platform]",			
 		
 		// http://fnichol.github.io/chef-user/
