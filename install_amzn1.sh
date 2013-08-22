@@ -42,4 +42,4 @@ if ! test -f "$chef_binary"; then
 		gem install chef ruby-shadow --no-ri --no-rdoc
 	
 fi &&
-$chef_binary -c $chef_directory/solo.rb -j $chef_directory/platform_ubuntu.json
+$chef_binary -c $chef_directory/solo.rb -j $chef_directory/platform_amzn1.json
