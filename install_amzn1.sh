@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # This runs as root on the server
-# Start: curl -L https://raw.github.com/amanelis/chef-agent/play/install_ubuntu.sh | bash
+# Start: curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1.sh | bash
 
 chef_binary=/usr/bin/chef-solo
 chef_directory=/root/chef-agent
