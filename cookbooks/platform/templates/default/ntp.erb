@@ -1,0 +1,37 @@
+#!/bin/ash
+
+# GPL $Id: ntpd,v 1.2 2005/03/22 15:06:15 cvonk Exp $
+# system init for Network Time Protocol client/server (ntpd)
+
+case "$1" in
+    start)
+	. /etc/sysconfig/ntpd/ntpserver.conf  # defines NTPPRE, NTPSERVER
+	# trigger backbone connect om my P75 remote access router
+	if [ ! -z "$NTPPRE" ] ; then
+	    wget -q -t 1 -O /dev/null $NTPPRE 2> /dev/null 1> /dev/null
+	fi
+        # no matter what, make ensure date is within range for
+        # X.509 certificates
+        date 010203042007 >/dev/null 2>/dev/null
+
+        if ntpdate -u -s -b -p 4 -t 5 $NTPSERVER ; then
+            ntpd -g -c /etc/sysconfig/ntpd.conf
+        else
+            exit 1
+        fi
+        ;;
+    stop)
+        killall ntpd 2>/dev/null
+        ;;
+    restart)
+	$0 stop
+	$0 start
+	;;
+    status)
+        if pidof ntpd | sed "s/$$\$//" | grep -q [0-9] ; then
+	    echo "running"
+        else
+	    echo "stopped"
+        fi
+        ;;
+esac
