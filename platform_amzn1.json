@@ -1,6 +1,5 @@
 {
 	"run_list" : [
-		"recipe[java]",					
 		"recipe[platform]",			
 		
 		// http://fnichol.github.io/chef-user/
