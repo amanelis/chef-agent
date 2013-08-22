@@ -2,6 +2,9 @@
 	"run_list" : [
 		"recipe[monit]",
 		"recipe[platform]",			
+
+		// https://github.com/hipsnip-cookbooks/papertrail-rsyslog
+		"recipe[papertrail-rsyslog]",
 		
 		// http://fnichol.github.io/chef-user/
 		"recipe[user]",
