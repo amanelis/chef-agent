@@ -7,10 +7,11 @@
 		"recipe[user]",
 
 		// https://github.com/hipsnip-cookbooks/papertrail-rsyslog
-		//"recipe[papertrail-rsyslog]",
+		"recipe[papertrail-rsyslog]",
 
+		// Only really works with Ubuntu
 		// https://github.com/samstokes/chef-papertrail
-		"recipe[chef-papertrail]",		
+		// "recipe[chef-papertrail]",		
 		
 		// https://github.com/escapestudios/chef-newrelic
 		"recipe[newrelic]"

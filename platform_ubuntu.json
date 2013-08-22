@@ -9,13 +9,9 @@
 		// http://fnichol.github.io/chef-user/
 		"recipe[user]",
 	
-		// https://github.com/hipsnip-cookbooks/papertrail-rsyslog
-		// "recipe[papertrail-rsyslog]",
-
 		// https://github.com/samstokes/chef-papertrail		
 		"recipe[chef-papertrail]", 
 
-		
 		// https://github.com/escapestudios/chef-newrelic
 		"recipe[newrelic]"
 	]
