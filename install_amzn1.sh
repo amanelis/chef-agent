@@ -33,10 +33,11 @@ if ! test -f "$chef_binary"; then
 		curl -L https://www.opscode.com/chef/install.sh | bash
 
 		# Clone our chef repository
-		git clone https://github.com/amanelis/chef-agent.git && cd chef-agent
+		git clone https://github.com/amanelis/chef-agent.git
 
 		# Install gems
 		# gem install chef ruby-shadow --no-ri --no-rdoc
 	
 fi &&
+
 $chef_binary -c $chef_directory/solo.rb -j $chef_directory/platform_amzn1.json
