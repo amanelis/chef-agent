@@ -25,7 +25,7 @@ if ! test -f "$chef_binary"; then
 		# git clone https://github.com/amanelis/chef-agent.git && cd chef-agent
 
 		# Install gems
-		gem install chef ruby-shadow --no-ri --no-rdoc
+		# gem install chef ruby-shadow --no-ri --no-rdoc
 	
 fi &&
 
