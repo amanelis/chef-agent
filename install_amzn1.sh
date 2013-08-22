@@ -23,11 +23,11 @@ if ! test -f "$chef_binary"; then
 	 	openssl openssl-devel make bzip2 autoconf automake libtool bison -y
 
 		# Install Ruby
-		curl -L https://get.rvm.io | bash -s stable --ruby
-		rm /usr/bin/ruby
-		ln -s /home/ec2-user/.rvm/rubies/ruby-1.9.3-p362/bin/gem /usr/bin/gem
-		ln -s /home/ec2-user/.rvm/rubies/ruby-1.9.3-p362/bin/ruby /usr/bin/ruby
-		ln -s /home/ec2-user/.rvm/bin/rvm /usr/bin/rvm
+		#curl -L https://get.rvm.io | bash -s stable --ruby
+		#rm /usr/bin/ruby
+		#ln -s /home/ec2-user/.rvm/rubies/ruby-1.9.3-p362/bin/gem /usr/bin/gem
+		#ln -s /home/ec2-user/.rvm/rubies/ruby-1.9.3-p362/bin/ruby /usr/bin/ruby
+		#ln -s /home/ec2-user/.rvm/bin/rvm /usr/bin/rvm
 
 		# Install Chef
 		curl -L https://www.opscode.com/chef/install.sh | bash
