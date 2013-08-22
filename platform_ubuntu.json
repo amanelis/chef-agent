@@ -6,6 +6,9 @@
 		"recipe[platform]",			
 		"recipe[monit]",
 		
+		// https://github.com/hipsnip-cookbooks/papertrail-rsyslog
+		"recipe[papertrail-rsyslog]",
+
 		// http://fnichol.github.io/chef-user/
 		"recipe[user]",
 
