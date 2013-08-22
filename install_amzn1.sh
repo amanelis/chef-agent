@@ -14,14 +14,13 @@ if ! test -f "$chef_binary"; then
 		cd ~
 		
 		# System upgrades and package installation
-		yum update -y && yum upgrade -y
+		yum update -y
+		yum upgrade -y
 		yum groupinstall "Development Tools" -y
 		yum install gcc g++ make automake autoconf libtool curl curl-devel openssl-devel zlib-devel \
-		apr-devel apr-util-devel sqlite-devel -y
-
-		yum install yum install readline-devel git make zlib-devel sqlite-devel.x86_64 gcc g++ svn git -y
-		yum install yum install patch readline readline-devel zlib zlib-devel libyaml-devel libffi-devel \
-	 	openssl openssl-devel make bzip2 autoconf automake libtool bison iconv-devel
+		apr-devel apr-util-devel sqlite-devel readline-devel git make zlib-devel sqlite-devel.x86_64 \
+		patch readline readline-devel libyaml-devel libffi-devel zlib svn git iconv-devel \
+	 	openssl openssl-devel make bzip2 autoconf automake libtool bison -y
 
 		# Install Ruby
 		curl -L https://get.rvm.io | bash -s stable --ruby
@@ -37,7 +36,7 @@ if ! test -f "$chef_binary"; then
 		git clone https://github.com/amanelis/chef-agent.git && cd chef-agent
 
 		# Install gems
-		gem install chef ruby-shadow --no-ri --no-rdoc
+		# gem install chef ruby-shadow --no-ri --no-rdoc
 	
 fi &&
 $chef_binary -c $chef_directory/solo.rb -j $chef_directory/platform_amzn1.json

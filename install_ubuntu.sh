@@ -15,10 +15,6 @@ if ! test -f "$chef_binary"; then
 		adduser ubuntu root
 		adduser ubuntu sudo	
 
-		# System upgrades and package installation
-    aptitude update && apt-get -o Dpkg::Options::="--force-confnew" --force-yes -fuy dist-upgrade
-		apt-get update -y && apt-get upgrade -y && apt-get install git-core build-essential curl wget -y
-
 		# Install Ruby
 		apt-get install ruby1.9.1 ruby1.9.1-dev rubygems1.9.1 irb1.9.1 ri1.9.1 rdoc1.9.1 -y 
 		apt-get install libopenssl-ruby1.9.1 libssl-dev zlib1g-dev -y
