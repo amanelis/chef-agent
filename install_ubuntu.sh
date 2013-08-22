@@ -2,7 +2,7 @@
 
 # This runs as root on the server
 
-chef_binary=/usr/local/bin/chef-solo
+chef_binary=/usr/bin/chef-solo
 chef_directory=/root/chef-agent
 
 # Are we on a vanilla system?
@@ -28,5 +28,4 @@ if ! test -f "$chef_binary"; then
 		# gem install chef ruby-shadow --no-ri --no-rdoc
 	
 fi &&
-$chef_solo=`which chef-solo`
-"$chef_solo" -c $chef_directory/solo.rb -j $chef_directory/platform.json
+$chef_binary -c $chef_directory/solo.rb -j $chef_directory/platform.json
