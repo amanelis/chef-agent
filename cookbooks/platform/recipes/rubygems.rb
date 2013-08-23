@@ -10,8 +10,8 @@ case node[:platform]
 		bash "install_rubygems" do
 			cwd Chef::Config[:file_cache_path]
 			code <<-EOH
-				tar zxf rubygems-1.8.24.tgz
-				cd rubygems-1.8.24
+				tar -zxf rubygems-*.tgz
+				cd rubygems-1.8*
 				/usr/bin/ruby setup.rb
 			EOH
 			action :nothing
