@@ -43,5 +43,5 @@ end
 
 service 'remote_syslog' do
   action [:enable, :start]
-	provider Chef::Provider::Service::Upstart
+	#provider Chef::Provider::Service::Upstart
 end
