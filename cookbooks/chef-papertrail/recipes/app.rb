@@ -16,7 +16,7 @@ file log_files_conf do
       port: #{papertrail_port}
   YAML
 
-  notifies :restart, 'service[remote_syslog]', :delayed
+  #notifies :restart, 'service[remote_syslog]', :delayed
 end
 
 file '/etc/init/remote_syslog.conf' do
