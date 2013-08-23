@@ -7,6 +7,16 @@ case node[:platform]
 		gem_package 'remote_syslog'
   when "centos", "redhat", "amazon", "scientific"
 		gem_package 'remote_syslog'
+
+		remote_file "#{Chef::Config[:file_cache_path]}/remote_syslog.init.d" do 
+			source "https://raw.github.com/papertrail/remote_syslog/master/examples/remote_syslog.init.d"
+			action :create_if_missing
+		end	
+
+		template "/etc/init.d/remote_syslog" do
+			source "#{Chef::Config[:file_cache_path]}/remote_syslog.init.d"
+			mode "0644"		
+		end
 	end
 
 
@@ -37,6 +47,6 @@ UPSTART
 end
 
 service 'remote_syslog' do
-  action :start
-  provider Chef::Provider::Service::Upstart
+  action [:enable, :start]
+	provider Chef::Provider::Service::Upstart
 end
