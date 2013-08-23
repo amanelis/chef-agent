@@ -11,6 +11,8 @@
 		//"recipe[rvm::system]",
 		//"recipe[rvm::system_install]",
 
+		// Stable to use and install on Amazon AMI, doesn't
+		// stream logs into papertrail though.
 		// https://github.com/hipsnip-cookbooks/papertrail-rsyslog
 		// "recipe[papertrail-rsyslog]",
 

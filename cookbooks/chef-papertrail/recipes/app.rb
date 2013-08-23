@@ -35,7 +35,11 @@ exec /usr/local/bin/remote_syslog -D --tls
   notifies :restart, 'service[remote_syslog]', :delayed
 end
 
-service 'remote_syslog' do
-  action :start
-  provider Chef::Provider::Service::Upstart
+execute "start remote_syslog" do
+	command "/usr/bin/ruby1.8 /usr/local/bin/remote_syslog -D --tls"
 end
+
+#service 'remote_syslog' do
+#  action :start
+#  provider Chef::Provider::Service::Upstart
+#end
