@@ -14,6 +14,7 @@ case node[:platform]
 				/usr/bin/ruby setup.rb
 			EOH
 			action :run
+			not_if { ::File.exists?("/usr/bin/gem") }
 		end  
 
 		gem_package "remote_syslog"
