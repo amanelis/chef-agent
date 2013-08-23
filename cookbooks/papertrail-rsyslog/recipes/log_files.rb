@@ -13,7 +13,7 @@ bash "append_host_port_to_rsyslog" do
 	code <<-EOF
 		echo "*.*          @logs.papertrailapp.com:40007" >> /etc/rsyslog.conf
 	EOF
-	not_if { ::File.readlines('/etc/rsyslog.conf').grep(/logs.papertrailapp.com/).size > 0 }
+	not_if { ::File.readlines('/etc/rsyslog.conf').grep(/logs.papertrailapp.com/).size == 1 }
 	notifies :restart, "service[remote_syslog]", :delayed
 end
 
