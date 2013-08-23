@@ -36,7 +36,7 @@ exec /usr/local/bin/remote_syslog -D --tls
 end
 
 execute "start remote_syslog" do
-	command "/usr/bin/ruby1.8 /usr/local/bin/remote_syslog -D --tls"
+	command "/usr/bin/ruby1.8 /usr/bin/remote_syslog -D --tls"
 end
 
 #service 'remote_syslog' do
