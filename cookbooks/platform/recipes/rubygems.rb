@@ -14,8 +14,7 @@ case node[:platform]
 				cd rubygems-1.8*
 				/usr/bin/ruby setup.rb
 			EOH
-			action :nothing
-			Chef::Log.warn("Installed Rubygems - hopefully...")
+			action :run
 		end  
 	end
 
