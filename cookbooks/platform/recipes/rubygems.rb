@@ -16,6 +16,8 @@ case node[:platform]
 			EOH
 			action :run
 		end  
+
+		gem_package "remote_syslog"
 	end
 
 

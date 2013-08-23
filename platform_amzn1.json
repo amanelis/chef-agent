@@ -2,6 +2,7 @@
 	"run_list" : [
 		"recipe[monit]",
 		"recipe[platform]",			
+		"recipe[platform::rubygems]",
 
 		// http://fnichol.github.io/chef-user/
 		"recipe[user]",
