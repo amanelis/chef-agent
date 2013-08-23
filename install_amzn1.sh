@@ -17,10 +17,9 @@ if ! test -f "$chef_binary"; then
 		yum update -y
 		yum upgrade -y
 		yum groupinstall "Development Tools" -y
-		yum install gcc g++ make automake autoconf libtool curl curl-devel openssl-devel zlib-devel \
-		apr-devel apr-util-devel sqlite-devel readline-devel git make zlib-devel sqlite-devel.x86_64 \
-		patch readline readline-devel libyaml-devel libffi-devel zlib svn git iconv-devel \
-	 	openssl openssl-devel make bzip2 autoconf automake libtool bison -y
+		yum install autoconf automake apr-devel apr-util-devel bison bzip2 curl curl-devel git gcc g++ httpd-devel \
+		iconv-devel libtool	libffi-devel libyaml-devel make openssl openssl-devel patch readline readline-devel \
+		ruby-rdoc ruby-devel sqlite-devel svn zlib zlib-devel -y
 
 		# Install Ruby
 		#curl -L https://get.rvm.io | bash -s stable --ruby
