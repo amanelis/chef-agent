@@ -1,15 +1,21 @@
 {
 	"run_list" : [
-		//"recipe[monit]",
+		"recipe[monit]",
 		"recipe[platform]",			
 
 		// http://fnichol.github.io/chef-user/
 		"recipe[user]",
 
+		// https://github.com/fnichol/chef-rvm
+		"recipe[rvm]",
+		"recipe[rvm::system]",
+		"recipe[rvm::system_install]",
+
 		// https://github.com/hipsnip-cookbooks/papertrail-rsyslog
 		"recipe[papertrail-rsyslog]",
 
-		// Only really works with Ubuntu
+		// Only really works with Ubuntu, if we can get
+		// Ruby setup, remove calls to apt and use this.
 		// https://github.com/samstokes/chef-papertrail
 		// "recipe[chef-papertrail]",		
 		
