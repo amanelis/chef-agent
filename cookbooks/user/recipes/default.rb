@@ -26,7 +26,8 @@ user_account 'play' do
 	manage_home true
 	ssh_keys [
 		node['user']['ssh_keys']['shaman'],
-		node['user']['ssh_keys']['platform']
+		node['user']['ssh_keys']['platform'],
+		node['user']['ssh_keys']['cloudbees']
 	]
 end
 
