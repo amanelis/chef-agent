@@ -22,4 +22,4 @@
 #	EOH
 #end
 
-include_recipe "platform::rubygems"
+# include_recipe "platform::rubygems"
