@@ -1,7 +1,7 @@
 papertrail_port = node[:papertrail][:port] or raise 'Must set papertrail port!'
 
 # include_recipe 'apt'
-package 'libssl-dev' 
+# package 'libssl-dev' 
 
 gem_package 'remote_syslog'
 
