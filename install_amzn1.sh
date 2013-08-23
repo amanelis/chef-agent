@@ -37,7 +37,6 @@ if ! test -f "$chef_binary"; then
 
 		# Install gems
 		# gem install chef ruby-shadow --no-ri --no-rdoc
-	
 fi &&
 
 $chef_binary -c $chef_directory/solo.rb -j $chef_directory/platform_amzn1.json
