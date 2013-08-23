@@ -42,7 +42,7 @@ UPSTART
 end
 
 service 'remote_syslog' do
-  action [:enable, :start]
-	provider Chef::Provider::Service::Init
-	#provider Chef::Provider::Service::Upstart
+	supports :restart => true, :reload => true
+  action :enable
+	subscribes :reload, "template[/etc/init.d/remote_syslog]", :immediately
 end
