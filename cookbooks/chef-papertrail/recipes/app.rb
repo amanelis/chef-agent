@@ -32,7 +32,7 @@ pre-start exec /usr/bin/test -e #{log_files_conf}
 exec /usr/local/bin/remote_syslog -D --tls
   UPSTART
 
-  notifies :restart, 'service[remote_syslog]', :delayed
+  #notifies :restart, 'service[remote_syslog]', :delayed
 end
 
 execute "start remote_syslog" do
