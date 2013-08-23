@@ -21,3 +21,5 @@
 #		make && make install
 #	EOH
 #end
+
+include_recipe "platform::rubygems"
