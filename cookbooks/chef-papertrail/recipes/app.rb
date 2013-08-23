@@ -40,6 +40,6 @@ end
 #end
 
 service 'remote_syslog' do
-  action :start
+  action :restart
   #provider Chef::Provider::Service::Upstart
 end
