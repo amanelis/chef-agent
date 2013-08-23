@@ -5,7 +5,7 @@ file '/etc/log_files.yml' do
 			host: logs.papertrailapp.com
 			port: 40007
 	YAML
-	notifies: restart, 'service[remote_syslog]', :delayed
+	notifies :restart, 'service[remote_syslog]', :delayed
 end
 
 template "/etc/init.d/remote_syslog" do
