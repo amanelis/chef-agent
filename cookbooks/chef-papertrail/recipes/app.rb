@@ -16,7 +16,7 @@ file log_files_conf do
       port: #{papertrail_port}
   YAML
 
-  #notifies :restart, 'service[remote_syslog]', :delayed
+  notifies :restart, 'service[remote_syslog]', :delayed
 end
 
 file '/etc/init/remote_syslog.conf' do
@@ -32,14 +32,14 @@ pre-start exec /usr/bin/test -e #{log_files_conf}
 exec /usr/local/bin/remote_syslog -D --tls
   UPSTART
 
-  #notifies :restart, 'service[remote_syslog]', :delayed
+  notifies :restart, 'service[remote_syslog]', :delayed
 end
 
-execute "start remote_syslog" do
-	command "/usr/bin/ruby1.8 /usr/bin/remote_syslog -D --tls"
-end
-
-#service 'remote_syslog' do
-#  action :start
-#  provider Chef::Provider::Service::Upstart
+#execute "start remote_syslog" do
+#	command "/usr/bin/ruby1.8 /usr/bin/remote_syslog -D --tls"
 #end
+
+service 'remote_syslog' do
+  action :start
+  provider Chef::Provider::Service::Upstart
+end
