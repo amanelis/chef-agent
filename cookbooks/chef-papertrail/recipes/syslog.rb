@@ -1,7 +1,7 @@
 papertrail_port = node[:papertrail][:port] or raise 'Must set papertrail port!'
 papertrail_cert = '/etc/syslog.papertrail.crt'
 
-include_recipe 'apt'
+# include_recipe 'apt'
 package 'rsyslog-gnutls'
 
 remote_file papertrail_cert do

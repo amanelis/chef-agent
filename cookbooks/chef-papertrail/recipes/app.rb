@@ -1,7 +1,7 @@
 papertrail_port = node[:papertrail][:port] or raise 'Must set papertrail port!'
 
-include_recipe 'apt'
-package 'libssl-dev' # needed so remote_syslog will build with ssl
+# include_recipe 'apt'
+package 'libssl-dev' 
 
 gem_package 'remote_syslog'
 
