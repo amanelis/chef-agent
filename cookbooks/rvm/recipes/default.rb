@@ -39,15 +39,15 @@ class Chef::Recipe
   include Chef::RVM::StringHelpers
 end
 
-rvm_gem "chef" do
-	action :install
-end
+#rvm_gem "chef" do
+#	action :install
+#end
 
-rvm_gem "ruby-shadow" do
-	action :install
-end
+#rvm_gem "ruby-shadow" do
+#	action :install
+#end
 
-rvm_gem "remote_syslog" do
-	version "1.6.14"
-	action :install
-end
+#rvm_gem "remote_syslog" do
+#	version "1.6.14"
+#	action :install
+#end
