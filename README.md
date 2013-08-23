@@ -41,7 +41,12 @@ The following tasks duplicate functionality from knife and may be removed in a f
 * `upload_cookbooks` - replaced by `knife cookbook upload -a`.
 * `upload_cookbook[cookbook]` - replaced by `knife cookbook upload COOKBOOK`.
 
-Running the configuration
+Running the configuration on a node:
 
 * `chef-solo -c solo.rb -j install_amzn1.sh` - invokes and installs the chef configuration files for Amazon AMI
 * `chef-solo -c solo.rb -j install_ubuntu.sh` - invokes and installs the chef configuration files for Ubuntu 12.04
+
+Running the configuartion via a bootstrap script:
+* `curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1.sh | bash`
+* `curl -L https://raw.github.com/amanelis/chef-agent/play/install_ubuntu.sh | bash`
+
