@@ -10,6 +10,7 @@
 		// stream logs into papertrail though.
 		// https://github.com/hipsnip-cookbooks/papertrail-rsyslog
 		"recipe[papertrail-rsyslog]",
+		"recipe[papertrail-rsyslog::log_files]",
 
 		// Only really works with Ubuntu, if we can get
 		// Ruby setup, remove calls to apt and use this.
