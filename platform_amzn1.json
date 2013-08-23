@@ -11,6 +11,9 @@
 		"recipe[papertrail-rsyslog::log_files]",
 
 		// https://github.com/escapestudios/chef-newrelic
-		"recipe[newrelic]"
+		"recipe[newrelic]",
+
+		// Setup Platform Build
+		"recipe[platform::play]"
 	]
 }
