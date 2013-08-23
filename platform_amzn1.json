@@ -19,7 +19,7 @@
 		// Only really works with Ubuntu, if we can get
 		// Ruby setup, remove calls to apt and use this.
 		// https://github.com/samstokes/chef-papertrail
-		// "recipe[chef-papertrail]",		
+		"recipe[chef-papertrail]",		
 		
 		// https://github.com/escapestudios/chef-newrelic
 		"recipe[newrelic]"
