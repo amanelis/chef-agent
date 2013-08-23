@@ -10,8 +10,6 @@ bash "install_rubygems" do
 		tar zxf rubygems-1.8.24.tgz
 		cd rubygems-1.8.24.tgz
 		/usr/bin/ruby setup.rb
-		yum install gcc g++ make automake autoconf curl-devel openssl-devel \
-		zlib-devel httpd-devel apr-devel apr-util-devel sqlite-devel -y \
-		ruby-rdoc ruby-devel -y
 	EOH
+	action :nothing
 end
