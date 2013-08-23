@@ -1,10 +1,5 @@
 file '/etc/log_files.yml' do
-content <<-YAML
-files:
-destination:
-  host: logs.papertrailapp.com
-  port: 40007
-YAML
+	source "log_files.yml.erb"
 	notifies :restart, 'service[remote_syslog]', :delayed
 end
 
