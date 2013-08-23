@@ -42,7 +42,5 @@ UPSTART
 end
 
 service 'remote_syslog' do
-	supports :restart => true, :reload => true
   action [:enable, :start]
-	subscribes :reload, "template[/etc/init.d/remote_syslog]", :immediately
 end
