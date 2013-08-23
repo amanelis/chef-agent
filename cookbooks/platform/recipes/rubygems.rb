@@ -5,7 +5,7 @@ remote_file "#{Chef::Config[:file_cache_path]}/rubygems-1.8.24.tgz" do
 end
 
 bash "install_rubygems" do
-	cwd Che::Config[:file_cache_path]
+	cwd Chef::Config[:file_cache_path]
 	code <<-EOH
 		tar zxf rubygems-1.8.24.tgz
 		cd rubygems-1.8.24.tgz
