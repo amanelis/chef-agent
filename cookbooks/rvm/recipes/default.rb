@@ -39,7 +39,13 @@ class Chef::Recipe
   include Chef::RVM::StringHelpers
 end
 
-#rvm_ruby "ruby-1.9.3-p194" do
-#	action :install
-#end
-#rvm_default_ruby "ruby-1.9.3-p194"
+rvm_ruby "ruby-1.9.3-p194" do
+	action :install
+end
+rvm_default_ruby "ruby-1.9.3-p194"
+
+rvm_gem "remote_syslog" do
+	version "1.6.14"
+	action :install
+end
+
