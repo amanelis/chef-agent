@@ -8,13 +8,8 @@ case node[:platform]
   when "centos", "redhat", "amazon", "scientific"
 		gem_package 'remote_syslog'
 
-		remote_file "#{Chef::Config[:file_cache_path]}/remote_syslog.init.d" do 
-			source "https://raw.github.com/papertrail/remote_syslog/master/examples/remote_syslog.init.d"
-			action :create_if_missing
-		end	
-
 		template "/etc/init.d/remote_syslog" do
-			source "#{Chef::Config[:file_cache_path]}/remote_syslog.init.d"
+			source "remote_syslog.erb"
 			mode "0644"		
 		end
 	end
