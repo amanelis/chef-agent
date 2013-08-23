@@ -1,25 +1,21 @@
 {
 	"run_list" : [
+		"recipe[java]",
 		"recipe[monit]",
 		"recipe[platform]",			
 
 		// http://fnichol.github.io/chef-user/
 		"recipe[user]",
 
-		// https://github.com/fnichol/chef-rvm
-		//"recipe[rvm]",
-		//"recipe[rvm::system]",
-		//"recipe[rvm::system_install]",
-
 		// Stable to use and install on Amazon AMI, doesn't
 		// stream logs into papertrail though.
 		// https://github.com/hipsnip-cookbooks/papertrail-rsyslog
-		// "recipe[papertrail-rsyslog]",
+		"recipe[papertrail-rsyslog]",
 
 		// Only really works with Ubuntu, if we can get
 		// Ruby setup, remove calls to apt and use this.
 		// https://github.com/samstokes/chef-papertrail
-		"recipe[chef-papertrail]",		
+		// "recipe[chef-papertrail]",		
 		
 		// https://github.com/escapestudios/chef-newrelic
 		"recipe[newrelic]"
