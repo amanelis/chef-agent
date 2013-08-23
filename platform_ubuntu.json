@@ -10,9 +10,9 @@
 		"recipe[user]",
 
 		// https://github.com/fnichol/chef-rvm
-		"recipe[rvm]",
-		"recipe[rvm::system]",
-		"recipe[rvm::system_install]",
+		//"recipe[rvm]",
+		//"recipe[rvm::system]",
+		//"recipe[rvm::system_install]",
 	
 		// https://github.com/samstokes/chef-papertrail		
 		"recipe[chef-papertrail]", 
