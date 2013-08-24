@@ -17,7 +17,7 @@
 # limitations under the License.
 #
 user_account 'play' do
-	action [:create, :manage]
+	action [:manage]
 	comment "Platform user 'play'"
 	uid 500
 	shell "/bin/bash"
