@@ -1,6 +1,8 @@
 {
 	"run_list" : [
 		"recipe[monit]",
+		
+		// Install any rubygem dependencies here
 		"recipe[platform::rubygems]",
 
 		// http://fnichol.github.io/chef-user/
