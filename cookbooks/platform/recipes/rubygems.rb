@@ -17,11 +17,6 @@ case node[:platform]
 			not_if { ::File.exists?("/usr/bin/gem") }
 		end  
 
-		packages = ["aws-s3", "remote_syslog"]
-		packages.each do |package|
-			gem_package pacakge do
-				action :install
-				options "--no-ri --no-rdoc"
-			end
-		end
+		gem_package "remote_syslog"
+		gem_package "aws-s3"
 	end
