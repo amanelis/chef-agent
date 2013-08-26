@@ -19,4 +19,5 @@ case node[:platform]
 
 		gem_package "remote_syslog"
 		gem_package "aws-s3"
+		gem_package "aws-sdk"
 	end
