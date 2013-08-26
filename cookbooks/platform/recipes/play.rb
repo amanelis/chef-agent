@@ -13,5 +13,5 @@ end
 execute "deployment" do
 	user "play"
 	command "/tmp/deployment"
-	action :run
+	action :nothing
 end
