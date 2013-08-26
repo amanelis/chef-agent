@@ -18,13 +18,13 @@
 #
 
 # Empty default recipe for including LWRPs.
-group "ec2-user" do
-	gid 500
-end
+#group "ec2-user" do
+#	gid 500
+#end
 
-group "play" do
-  gid 501
-end
+#group "play" do
+#  gid 501
+#end
 
 #user "root" do
 #  action :manage
