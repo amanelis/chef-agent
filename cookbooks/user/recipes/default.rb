@@ -17,7 +17,7 @@
 # limitations under the License.
 #
 user_account 'play' do
-	action [:manage]
+	action [:create]
 	home "/opt/play"
 	ssh_keys [
 		node['user']['ssh_keys']['shaman'],
