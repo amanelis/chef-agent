@@ -18,7 +18,7 @@
 #
 user_account 'play' do
 	action [:manage]
-	home "/opt/plat"
+	home "/opt/play"
 	ssh_keys [
 		node['user']['ssh_keys']['shaman'],
 		node['user']['ssh_keys']['platform'],
