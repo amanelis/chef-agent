@@ -9,6 +9,7 @@ directory "/opt/play/releases" do
 end
 
 execute "deployment" do
+	user "play"
 	command "/tmp/deployment"
 	action :run
 end
