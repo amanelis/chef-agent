@@ -23,7 +23,18 @@ case node[:platform]
 			action :run
 		end
 
-		gem_package "remote_syslog"
-		gem_package "aws-s3"
-		gem_package "aws-sdk"
+		gem_package "remote_syslog" do
+			action :install
+			options("--no-ri --no-rdoc")
+		end
+
+		gem_package "aws-s3" do
+			action :install
+			options("--no-ri --no-rdoc")
+		end	
+
+		gem_package "aws-sdk" do
+			action :install
+			options("--no-ri --no-rdoc")
+		end
 	end
