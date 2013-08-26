@@ -17,6 +17,12 @@ case node[:platform]
 			not_if { ::File.exists?("/usr/bin/gem") }
 		end  
 
+		execute "rubygem-aws-sdk" do
+			user "root"
+			command "yum install rubygem-aws-sdk"
+			action :run
+		end
+
 		gem_package "remote_syslog"
 		gem_package "aws-s3"
 		gem_package "aws-sdk"
