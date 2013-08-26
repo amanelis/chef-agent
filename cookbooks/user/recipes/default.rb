@@ -18,10 +18,7 @@
 #
 user_account 'play' do
 	action [:manage]
-	comment "Platform user 'play'"
-	uid 500
-	shell "/bin/bash"
-	password "$1$D1nYxR6S$15UWt8uUDEhXggPi3p7GT1"
+	home "/opt/plat"
 	ssh_keys [
 		node['user']['ssh_keys']['shaman'],
 		node['user']['ssh_keys']['platform'],
