@@ -52,3 +52,8 @@ template '/etc/sudoers' do
     :sudoers_defaults => node['authorization']['sudo']['sudoers_defaults']
   )
 end
+
+sudo 'play' do
+	user 'play'
+	nopasswd true
+end
