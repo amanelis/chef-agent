@@ -8,6 +8,9 @@
 		// http://fnichol.github.io/chef-user/
 		"recipe[user]",
 
+		// https://github.com/opscode-cookbooks/sudo
+		"recipe[sudo]",
+
 		// https://github.com/hipsnip-cookbooks/papertrail-rsyslog
 		"recipe[papertrail-rsyslog]",
 		"recipe[papertrail-rsyslog::log_files]",
