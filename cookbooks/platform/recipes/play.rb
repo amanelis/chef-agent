@@ -15,6 +15,7 @@ template "/etc/init/platform.conf" do
 	mode 0644
 	owner "root"
 	group "root"
+	notifies :run, "execute[deployment]"
 end
 
 execute "deployment" do
