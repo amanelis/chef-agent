@@ -19,7 +19,7 @@ case node[:platform]
 
 		execute "rubygem-aws-sdk" do
 			user "root"
-			command "yum install rubygem-aws-sdk"
+			command "yum install rubygem-aws-sdk -y"
 			action :run
 		end
 
