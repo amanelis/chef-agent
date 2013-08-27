@@ -1,5 +1,6 @@
 {
 	"run_list" : [
+		// Setsup up Monit, don't have a config file yet
 		"recipe[monit]",
 		
 		// Install any rubygem dependencies here
