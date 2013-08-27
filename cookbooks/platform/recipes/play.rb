@@ -17,6 +17,13 @@ template "/etc/init/platform.conf" do
 	mode 0644
 	owner "root"
 	group "root"
+end
+
+template "/tmp/deployment" do
+	source "deployment.erb"
+	mode 0755
+	owner "root"
+	group "root"	
 	notifies :run, "execute[deployment]"
 end
 

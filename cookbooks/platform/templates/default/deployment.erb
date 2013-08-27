@@ -1,0 +1,182 @@
+#! /usr/bin/ruby
+
+require 'rubygems'
+require 'optparse'
+require 'yaml'
+require 'aws/s3'
+require 'aws-sdk'
+
+options = {}
+options[:env] = :test
+options[:stdout] = true
+options[:verbose] = false
+options[:configuration] = {
+  :aws => {
+    :credentials_file => '/etc/.aws-credentials.yml',
+    :elb => {}
+  }
+}
+
+# First check and see if keys exist
+if File.exists?(options[:configuration][:aws][:credentials_file]) 
+  credentials = YAML::load(File.open(options[:configuration][:aws][:credentials_file], 'r'))
+  
+  options[:configuration][:aws][:access_key_id]     = credentials['aws']['access_key_id']
+  options[:configuration][:aws][:secret_access_key] = credentials['aws']['secret_access_key']
+else
+  puts "--------------------------------------------------------------------"
+  puts "\033[22;31mCould not find a valid credential file at #{options[:configuration][:aws][:credentials_file]}\033[37m"
+  puts "--------------------------------------------------------------------"
+  exit 1
+end
+
+OptionParser.new do |parser|
+  parser.banner = "USAGE: deployment [options]"
+  parser.separator ""
+  parser.separator "Specific options:"
+
+  parser.on("-e", "--env [environment]", "Pass the environment you would like to boot there server in.") do |setting|
+    exit 1 if setting.nil?
+    default_envs = [:test, :staging, :production]
+    environment  = setting.strip.downcase.to_sym
+    
+    if !default_envs.include?(environment) 
+      puts "You typed '\033[22;31m#{setting}\033[37m' for the environment, must be one of the following:"
+      puts "  [#{default_envs.join(', ')}]"
+      exit
+    else
+      options[:env] = setting
+      
+      case environment
+      when :test
+        options[:configuration][:aws][:bucket]      = 'com.signifyd.dev'
+        options[:configuration][:aws][:elb][:fqdn]  = 'platform-test-branch-1832708431.us-east-1.elb.amazonaws.com'
+        options[:configuration][:aws][:elb][:name]  = 'platform-test-branch'
+        options[:configuration][:deployment_dir]    = '/opt/play/releases'
+      when :staging
+        options[:configuration][:aws][:bucket]      = 'com.signifyd.staging'
+        options[:configuration][:aws][:elb][:fqdn]  = 'platform-staging-2105015457.us-east-1.elb.amazonaws.com'
+        options[:configuration][:aws][:elb][:name]  = 'platform-staging'
+        options[:configuration][:deployment_dir]    = '/opt/play/releases'
+      when :production
+        options[:configuration][:aws][:bucket]      = 'com.signifyd.prod'
+        options[:configuration][:aws][:elb][:fqdn]  = 'platform01-1341277459.us-east-1.elb.amazonaws.com'
+        options[:configuration][:aws][:elb][:name]  = 'platform01'
+        options[:configuration][:deployment_dir]    = '/opt/play/releases'
+      end
+    end
+  end
+  
+  parser.on("-v", "--verbose", "Runs the application in versbose mode for debugging.") do |setting|
+    options[:verbose] = setting
+  end
+  
+  parser.on("-s", "--sync-output [boolean]", "Syncs stdout with console so wait progress is enabled. Default enabled.") do |setting|
+    options[:stdout] = setting
+  end
+
+  parser.on_tail("-h", "--help", "--usage", "Show this usage message and quit.") do |setting|
+    puts parser.help
+    exit
+  end
+end.parse!(ARGV)
+
+# Sync standard out
+$stdout.sync = options[:stdout]
+
+AWS.config(:access_key_id => options[:configuration][:aws][:access_key_id], :secret_access_key => options[:configuration][:aws][:secret_access_key])
+AWS::S3::Base.establish_connection!(:access_key_id => options[:configuration][:aws][:access_key_id], :secret_access_key => options[:configuration][:aws][:secret_access_key])
+
+EC2 = AWS::EC2.new
+ELB = AWS::ELB.new
+
+puts "Connectiong to S3 - fetching build information..."
+buckets = AWS::S3::Service.buckets
+com_signifyd_prod = AWS::S3::Bucket.find(options[:configuration][:aws][:bucket])
+job_number = com_signifyd_prod.objects.collect(&:key).inject([]){ |array, value|
+  match = (/\d+/).match(value)
+  match.nil? ? array : array << match[0]
+}.sort.last
+
+build_hash = {
+  :build => {
+    :location =>   "platform-builds/#{job_number}-signifydplatform-1.0-SNAPSHOT.zip",
+    :name =>       "#{job_number}-signifydplatform-1.0-SNAPSHOT.zip"
+  },
+  :javaopts =>   {
+    :location =>   "platform-builds/java_opts",
+    :name =>       "java_opts"
+  },
+  :newrelic =>  {
+    :location =>  "platform-builds/newrelic.yml",
+    :name =>      "newrelic.yml",
+  }
+}
+
+# The final build directory
+build_directory = "#{options[:configuration][:deployment_dir]}/build-#{job_number}"
+system("/bin/rm -rf #{options[:configuration][:deployment_dir]}/build-#{job_number}/*")
+
+# Create the directory where the deploys will be saved,
+# chances are this dir won't exists.
+Dir.mkdir(build_directory) unless File.exists?(build_directory)
+system("touch #{build_directory}/play.log")
+
+# Iterate through the build hash and save the data 
+build_hash.collect { |k,v|
+  job_name  = k
+  file_name = v[:name]
+  location  = v[:location]
+
+  puts "Downloading: #{job_name}"
+  puts "  => saving #{file_name} to #{location}"
+
+  File.open("#{build_directory}/#{file_name}", "wb") do |file|
+    AWS::S3::S3Object.stream(location, options[:configuration][:aws][:bucket]) { |chunk| file.write chunk }
+  end
+}
+
+puts "Completed file transafer for build-#{job_number}"
+puts "Unzipping build data: #{build_directory}/#{build_hash[:build][:name]}"
+system("/usr/bin/unzip #{build_directory}/#{build_hash[:build][:name]} -d #{build_directory}")
+system("/bin/ln -nsf #{build_directory} /opt/play/current")
+puts "Stopping any running instance of platform"
+system("/usr/bin/sudo stop platform")
+puts "Starting a new instance of play..."
+system("/usr/bin/sudo start platform EMAIL_ALERT_FREQUENCY=0")
+system("/bin/rm #{build_directory}/*.zip")
+
+# Should redirect 1, fail is 0
+hostname      = `echo $HOSTNAME`
+private_ip    = hostname.strip.gsub!('ip-', '').gsub!('-', '.')
+
+puts "Fetching node information for given hostname #{hostname} with a private ip of #{private_ip}"
+instance_node = EC2.instances.select { |instance| 
+  next if instance.private_ip_address.nil?
+  puts " => Node: #{instance.id}, #{instance.dns_name}, #{instance.private_ip_address} == #{private_ip}"
+  instance.private_ip_address == private_ip
+}[0]
+puts "Node found: #{instance_node.dns_name}"
+
+puts "Waiting on node to start play..."
+while true
+  sleep 2
+  print '.'
+  response = `curl -Is http://#{instance_node.dns_name} | grep -c 303`.strip
+
+  if response == 1 || response == "1"
+    puts ""
+    break
+  end
+end
+
+lbs = ELB.load_balancers
+load_balancer = lbs.select { |lb| 
+  lb.name.include?(options[:configuration][:aws][:elb][:name]) || lb.name.include?(options[:configuration][:aws][:elb][:fqdn]) ||
+  lb.dns_name.include?(options[:configuration][:aws][:elb][:name]) || lb.dns_name.include?(options[:configuration][:aws][:elb][:fqdn]) 
+}[0]
+puts "Load Balancer: #{load_balancer.name} has #{load_balancer.instances.count} node(s) associated with it."
+puts "Node is ready, now adding to load balancer..."
+load_balancer.instances.register(instance_node)
+puts "After add, load balancer has #{load_balancer.instances.count} node(s)."
+exit 0
