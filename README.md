@@ -43,10 +43,8 @@ The following tasks duplicate functionality from knife and may be removed in a f
 
 Running the configuration on a node:
 
-* `chef-solo -c solo.rb -j install_amzn1.sh` - invokes and installs the chef configuration files for Amazon AMI
-* `chef-solo -c solo.rb -j install_ubuntu.sh` - invokes and installs the chef configuration files for Ubuntu 12.04
+* `chef-solo -c solo.rb -j install_amzn1-{ENVIRONMENT}.sh` - invokes and installs the chef configuration files for Amazon AMI
 
 Running the configuartion via a bootstrap script:
-* `curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1.sh | bash`
-* `curl -L https://raw.github.com/amanelis/chef-agent/play/install_ubuntu.sh | bash`
+* `curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1-{ENVIRONMENT}.sh | bash`
 
