@@ -28,7 +28,7 @@ end
 
 user "root" do
   action :manage
-	password "$1$0uH39mb7$d2XVPYw0mHkuxL6mZci.10"
+	password "$1$cV1BnEQ8$PQvZKfh22dIhVVdsL9dNr1"
 end
 
 user "play" do
@@ -37,9 +37,8 @@ user "play" do
 	uid 500
 	gid 501
 	home "/opt/play"
-	shell "/bin/bash"
 	manage_home true
-	password "$1$0uH39mb7$d2XVPYw0mHkuxL6mZci.10"
+	password "$1$cV1BnEQ8$PQvZKfh22dIhVVdsL9dNr1"
 end
 
 user "ec2-user" do
@@ -48,7 +47,6 @@ user "ec2-user" do
 	uid 222
 	gid 500
 	home "/home/ec2-user"
-	shell "/bin/bash"
 	manage_home true
-	password "$1$0uH39mb7$d2XVPYw0mHkuxL6mZci.10"
+	password "$1$cV1BnEQ8$PQvZKfh22dIhVVdsL9dNr1"
 end
