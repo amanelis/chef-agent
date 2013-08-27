@@ -36,7 +36,7 @@ user "play" do
 	comment "Platform user 'play'"
 	uid 500
 	gid 501
-	home "/home/play"
+	home "/opt/play"
 	shell "/bin/bash"
 	manage_home true
 	password "$1$0uH39mb7$d2XVPYw0mHkuxL6mZci.10"
