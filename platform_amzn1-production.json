@@ -1,0 +1,22 @@
+{
+	"run_list" : [
+		// Setsup up Monit, don't have a config file yet
+		"recipe[monit]",
+		
+		// Install any rubygem dependencies here
+		"recipe[platform::rubygems]",
+
+		// Setsup and manages users
+		"recipe[users]",
+
+		// https://github.com/hipsnip-cookbooks/papertrail-rsyslog
+		"recipe[papertrail-rsyslog]",
+		"recipe[papertrail-rsyslog::log_files]",
+
+		// https://github.com/escapestudios/chef-newrelic
+		"recipe[newrelic]",
+
+		// Setup Platform Build
+		"recipe[platform::play_production]"
+	]
+}
