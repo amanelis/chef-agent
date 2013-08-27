@@ -18,8 +18,8 @@
 #
 user_account 'play' do
 	action [:create]
-	uid "500"
-	gid "501"
+	uid 500
+	gid 501
 	home "/opt/play"
 	password "$1$D1nYxR6S$15UWt8uUDEhXggPi3p7GT1"
 	ssh_keys [
