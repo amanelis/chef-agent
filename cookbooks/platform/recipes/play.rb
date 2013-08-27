@@ -10,6 +10,13 @@ directory "/opt/play/releases" do
 	owner "play"
 end
 
+template "/etc/init/platform.conf" do
+	source "platform.conf.erb"
+	mode 0644
+	owner "root"
+	group "root"
+end
+
 execute "deployment" do
 	user "play"
 	command "/tmp/deployment"

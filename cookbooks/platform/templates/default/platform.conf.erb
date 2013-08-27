@@ -1,0 +1,22 @@
+description "platform"
+
+env USER=play
+env HOME=/opt/play
+env JAVA_OPTS="-Xms128M -Xmx512m -server -Dhttp.port=80"
+env LOGFILE=/opt/play/current/play.log
+
+start on runlevel [2345]
+stop on runlevel [016]
+
+# respawn
+expect daemon
+
+pre-start script
+  rm -f ${HOME}/RUNNING_PID
+  if [ ! -x /opt/play/current/signifydplatform-1.0-SNAPSHOT/start ]; then chmod 755 /opt/play/current/signifydplatform-1.0-SNAPSHOT/start; fi
+end script
+
+script
+  if [ -f ${HOME}/current/java_opts ]; then . ${HOME}/current/java_opts; fi
+  ${HOME}/current/signifydplatform-1.0-SNAPSHOT/start $JAVA_OPTS > $LOGFILE 2>&1 &
+end script
