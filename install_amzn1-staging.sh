@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # This runs as root on the server
-# Start: curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1.sh | bash
+# Start: curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1-staging.sh | bash
 
 chef_binary=/usr/bin/chef-solo
 chef_directory=/root/chef-agent
@@ -28,4 +28,4 @@ if ! test -f "$chef_binary"; then
 		git clone https://github.com/amanelis/chef-agent.git
 fi &&
 
-$chef_binary -c $chef_directory/solo.rb -j $chef_directory/platform_amzn1.json
+$chef_binary -c $chef_directory/solo.rb -j $chef_directory/platform_amzn1-staging.json
