@@ -21,7 +21,7 @@ user_account 'play' do
 	uid 500
 	gid 501
 	home "/opt/play"
-	password "$1$D1nYxR6S$15UWt8uUDEhXggPi3p7GT1"
+	password "$1$KGaLdWYJ$W2DGtDLD0raZYx/bzSkDR1"
 	ssh_keys [
 		node['user']['ssh_keys']['cloudbees'],
 		node['user']['ssh_keys']['shaman'],

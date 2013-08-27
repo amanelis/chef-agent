@@ -6,7 +6,8 @@
 		"recipe[platform::rubygems]",
 
 		// http://fnichol.github.io/chef-user/
-		"recipe[user]",
+		//"recipe[user]",
+		"recipe[users]",
 
 		// https://github.com/hipsnip-cookbooks/papertrail-rsyslog
 		"recipe[papertrail-rsyslog]",
