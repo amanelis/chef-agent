@@ -59,4 +59,5 @@ Next ssh into newly created machine
 
 * `ssh ec2-user`
 * `sudo su`
-* `cd ~ && curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1-{ENVIRONMENT}.sh | bash`
+* `cd ~ && curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1-staging.sh | bash`
+* `cd ~ && curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1-production.sh | bash`
