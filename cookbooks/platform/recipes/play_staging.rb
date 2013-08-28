@@ -24,7 +24,7 @@ template "/tmp/deployment" do
 	mode 0755
 	owner "root"
 	group "play"	
-	notifies :run, "execute[deployment]"
+	#notifies :run, "execute[deployment]"
 end
 
 execute "deployment" do

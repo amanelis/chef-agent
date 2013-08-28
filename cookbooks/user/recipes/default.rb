@@ -17,10 +17,11 @@
 # limitations under the License.
 #
 user_account 'play' do
-	action [:create]
+	action [:create, :manage]
 	uid 500
 	gid 501
 	home "/opt/play"
+	manage_home true
 	password "$1$KGaLdWYJ$W2DGtDLD0raZYx/bzSkDR1"
 	ssh_keys [
 		node['user']['ssh_keys']['cloudbees'],

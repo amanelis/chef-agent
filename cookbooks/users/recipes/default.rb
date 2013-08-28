@@ -26,30 +26,30 @@ group "play" do
   gid 501
 end
 
-user "root" do
-  action :manage
-	password "$1$cV1BnEQ8$PQvZKfh22dIhVVdsL9dNr1"
-end
+#user "root" do
+#  action :manage
+#	password "$1$cV1BnEQ8$PQvZKfh22dIhVVdsL9dNr1"
+#end
 
-user "play" do
-	action [:create, :manage]
-	comment "Platform user 'play'"
-	uid 500
-	gid 501
-	home "/opt/play"
-	manage_home true
-	password "$1$cV1BnEQ8$PQvZKfh22dIhVVdsL9dNr1"
-end
+#user "play" do
+#	action [:create, :manage]
+#	comment "Platform user 'play'"
+#	uid 500
+#	gid 501
+#	home "/opt/play"
+#	manage_home true
+#	password "$1$cV1BnEQ8$PQvZKfh22dIhVVdsL9dNr1"
+#end
 
-user "ec2-user" do
-	action [:create, :manage]
-	comment "Platform user 'ec2-user'"
-	uid 222
-	gid 500
-	home "/home/ec2-user"
-	manage_home true
-	password "$1$cV1BnEQ8$PQvZKfh22dIhVVdsL9dNr1"
-end
+#user "ec2-user" do
+#	action [:create, :manage]
+#	comment "Platform user 'ec2-user'"
+#	uid 222
+#	gid 500
+#	home "/home/ec2-user"
+#	manage_home true
+#	password "$1$cV1BnEQ8$PQvZKfh22dIhVVdsL9dNr1"
+#end
 
 template "/etc/sudoers" do
 	source "sudoers.erb"

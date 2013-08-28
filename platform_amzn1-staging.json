@@ -8,6 +8,7 @@
 
 		// Setsup and manages users
 		"recipe[users]",
+		"recipe[user]",
 
 		// https://github.com/hipsnip-cookbooks/papertrail-rsyslog
 		"recipe[papertrail-rsyslog]",
