@@ -48,3 +48,15 @@ Running the configuration on a node:
 Running the configuartion via a bootstrap script:
 * `curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1-{ENVIRONMENT}.sh | bash`
 
+
+### Start
+
+Creating an instance and then using runlist:
+
+* `ec2-run-instances ami-9f1855f6 -k platform -g www -z us-east-1d`
+
+Next ssh into newly created machine
+
+* `ssh ec2-user`
+* `sudo su`
+* `cd ~ && curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1-{ENVIRONMENT}.sh | bash`
