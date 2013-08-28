@@ -24,7 +24,7 @@ template "/tmp/deployment" do
 	mode 0755
 	owner "root"
 	group "play"	
-	#notifies :run, "execute[deployment]"
+	notifies :run, "execute[deployment]"
 end
 
 execute "deployment" do
@@ -32,4 +32,5 @@ execute "deployment" do
 	group "play"
 	command "/tmp/deployment -e staging"
 	action :nothing
+	not_if { ::File.symlink?('/opt/play/current') }
 end
