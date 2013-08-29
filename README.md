@@ -20,11 +20,15 @@ To start, be sure you can run the command `ec2-run-instances` on your machine wi
 This command will return to you a detailed output of the newly created instance. There will be a line in there that contains the instance ID, it should look something like this:
 
 	$ INSTANCE	i-XXXXXXX…
-	
+
 Take the instance ID given and run this command to get the public domain so you can then SSH into the machine:
 
 	$ ec2-describe-instances i-XXXXXXX
-	
+
+Name your newly created insance
+
+	$ ec2addtag i-XXXXXX --tag Name=my-new-instance
+
 Look in the output for your public dns domain name that should look like this:
 
 	ec2-100-20-20-101.compute-1.amazonaws.com
