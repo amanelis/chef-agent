@@ -3,7 +3,7 @@
 ## Introduction
 This package is used to deploy a new node to a given environment on a newly created EC2 instance. To see what packages are being installed be sure to have a look at the run lists associated with this Chef Solo package here: `platform_amzn1-{staging|production}.json`
 
-These packages that are specified in the run list can be found in `cookbooks/` and they contain all of the `cookbooks/{cookbook}/recipies/*` code that is specified in the run list to be installed on the new system. Recipes are where commands and configuration for the system are defined. 
+These packages that are specified in the run list can be found in `cookbooks/` and they contain all of the `cookbooks/{cookbook}/recipes/*` code that is specified in the run list to be installed on the new system. Recipes are where commands and configuration for the system are defined. 
 
 ## Dependencies and Assumptions
 Before getting started using these commands, we assume that you have the [Amazon EC2 Tools] package installed. Do not continue unless it is fully installed and functional. Follow the steps here ([Amazon EC2 Tools]) to get started. 
