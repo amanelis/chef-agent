@@ -47,4 +47,6 @@ if ! test -f "$chef_binary"; then
 fi &&
 
 echo $env
-#$chef_binary -c $chef_directory/solo.rb -j $chef_directory/platform_amzn1-$env.json
+
+# Excute Chef-solo
+$chef_binary -c $chef_directory/solo.rb -j $chef_directory/platform_amzn1-$env.json
