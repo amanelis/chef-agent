@@ -1,0 +1,48 @@
+#!/bin/bash
+
+# This runs as root on the server
+# Start: curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1.sh | bash
+
+case "$1" in
+  "")
+    echo "USAGE: install.sh --{environment}"
+    RETVAL=1
+    exit $RETVAL
+    ;;
+  --staging|staging)
+    echo "Deploying to Staging Environment"
+		env="staging"
+    ;;
+  --production|production)
+    echo "Deploying to Production Environment"
+		env="production"
+    ;;
+esac
+
+chef_binary=/usr/bin/chef-solo
+chef_directory=/root/chef-agent
+
+# Are we on a vanilla system?
+if ! test -f "$chef_binary"; then
+    export DEBIAN_FRONTEND=noninteractive
+    
+		# House keeping
+		cd ~
+		
+		# System upgrades and package installation
+		yum update -y
+		yum upgrade -y
+		yum groupinstall "Development Tools" -y
+		yum install autoconf automake apr-devel apr-util-devel bison bzip2 curl curl-devel git gcc g++ httpd-devel \
+		iconv-devel libtool	libffi-devel libyaml-devel make openssl openssl-devel patch readline readline-devel \
+		ruby-rdoc ruby-devel sqlite-devel svn zlib zlib-devel -y
+
+		# Install Chef
+		curl -L https://www.opscode.com/chef/install.sh | bash
+
+		# Clone our chef repository
+		git clone https://github.com/amanelis/chef-agent.git
+fi &&
+
+echo $env
+#$chef_binary -c $chef_directory/solo.rb -j $chef_directory/platform_amzn1-$env.json
