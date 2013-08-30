@@ -54,7 +54,11 @@ Now comes the fun part, downloading and running chef. This next command does a l
 
 
 
+## Using Knife
 
+This section is experimental. Trying to get the `knife` package to boot the entire image, but getting certificate errors. Here is an example command:
+
+	$ knife ec2 server create -r 'role[staging]' -I ami-9f1855f6 -f m1.small -S platform -G www -N platform-staging-03
 
 
 
