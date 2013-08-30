@@ -52,22 +52,15 @@ Now comes the fun part, downloading and running chef. This next command does a l
 
 	$ curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1.sh | bash -s production
 
-
-
 ## Using Knife
+This section is experimental. Trying to get the `knife` package to boot the entire image, but getting certificate errors. Be sure to run `bundle install` before running this command. You will also need to set an envrionment varibale of the following. 
 
-This section is experimental. Trying to get the `knife` package to boot the entire image, but getting certificate errors. Here is an example command:
+	$ export AWS_ACCESS_KEY_ID='YOUR-KEY'
+	$ export AWS_SECRET_ACCESS_KEY='YOUR-SECRET'
 
-	$ knife ec2 server create -r 'role[staging]' -I ami-9f1855f6 -f m1.small -S platform -G www -N platform-staging-03
+Here is an example command:
 
-
-
-
-
-
-
-
-
-
+	$ knife ec2 server create -r 'role[staging]' -I ami-9f1855f6 -f m1.small -S platform -G www -N platform-staging-0X
+	$ knife ec2 server create -r 'role[production]' -I ami-9f1855f6 -f m1.small -S platform -G www -N platform-production-0X
 
 [Amazon EC2 Tools]: http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/SettingUp_CommandLine.html
