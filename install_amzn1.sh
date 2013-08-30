@@ -11,11 +11,11 @@ case "$1" in
     RETVAL=1
     exit $RETVAL
     ;;
-  --staging|staging)
+  staging)
     echo "Deploying to Staging Environment"
 		env="staging"
     ;;
-  --production|production)
+  production)
     echo "Deploying to Production Environment"
 		env="production"
     ;;
@@ -49,4 +49,4 @@ fi &&
 echo $env
 
 # Excute Chef-solo
-$chef_binary -c $chef_directory/solo.rb -j $chef_directory/platform_amzn1-$env.json
+$chef_binary -c $chef_directory/solo.rb -j $chef_directory/roles/$env.json
