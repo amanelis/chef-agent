@@ -66,3 +66,4 @@ Here is an example command:
 [Amazon EC2 Tools]: http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/SettingUp_CommandLine.html
 [Knife AWS]: http://docs.opscode.com/plugin_knife_ec2.html
 [Knife Github]: https://github.com/opscode/knife-ec2
+[Knife Server Github]: https://github.com/fnichol/knife-server
