@@ -1,7 +1,7 @@
 # Chef Solo
 
 ## Introduction
-This package is used to deploy a new node to a given environment on a newly created EC2 instance. To see what packages are being installed be sure to have a look at the run lists associated with this Chef Solo package here: `platform_amzn1-{staging|production}.json`
+This package is used to deploy a new node to a given environment on a newly created EC2 instance. To see what packages are being installed be sure to have a look at the run lists associated with this Chef Solo package here: `roles/{staging|production}.json`
 
 These packages that are specified in the run list can be found in `cookbooks/` and they contain all of the `cookbooks/{cookbook}/recipes/*` code that is specified in the run list to be installed on the new system. Recipes are where commands and configuration for the system are defined. 
 
@@ -46,11 +46,11 @@ Now comes the fun part, downloading and running chef. This next command does a l
 
 #### Staging
 
-	$ curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1-staging.sh | bash
+	$ curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1.sh | bash -s staging
 	
 #### Production
 
-	$ curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1-production.sh | bash
+	$ curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1.sh | bash -s production
 
 
 
