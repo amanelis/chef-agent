@@ -1,4 +1,5 @@
 {
+	"name": "Platform Production server",
 	"run_list" : [
 		// Setsup up Monit, don't have a config file yet
 		"recipe[monit]",
