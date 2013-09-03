@@ -15,7 +15,7 @@ You will also need your EC2 key pair. In this demonstration we will assume its c
 ## Creating a valid and ready instance
 To start, be sure you can run the command `ec2-run-instances` on your machine with no arguments. Next we need to run this with 3 arguments to build a correct instance. You'll want to give it our default build image of `ami-9f1855f6` the key name of `mykey` the security group `www` and the zone `us-east-1d`. 
 
-	$ ec2-run-instances ami-9f1855f6 -k mykey -g www -z us-east-1d
+	$ ec2-run-instances ami-971758fe -k mykey -g www -z us-east-1d
 	
 This command will return to you a detailed output of the newly created instance. There will be a line in there that contains the instance ID, it should look something like this:
 
