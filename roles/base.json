@@ -17,6 +17,5 @@
 
 		// https://github.com/escapestudios/chef-newrelic
 		"recipe[newrelic]"
-
 	]
 }
