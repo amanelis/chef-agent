@@ -19,6 +19,7 @@
 		"recipe[newrelic]",
 
 		// Setup Platform Build
+		"recipe[platform::base]",
 		"recipe[platform::production]"
 	]
 }
