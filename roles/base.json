@@ -16,6 +16,9 @@
 		"recipe[papertrail-rsyslog::log_files]",
 
 		// https://github.com/escapestudios/chef-newrelic
-		"recipe[newrelic]"
+		"recipe[newrelic]",
+
+		// Base Platform setup, just create directories
+		"recipe[platform::base]"
 	]
 }

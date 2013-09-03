@@ -19,6 +19,6 @@
 		"recipe[newrelic]",
 
 		// Setup Platform Build
-		"recipe[platform::play_staging]"
+		"recipe[platform::staging]"
 	]
 }
