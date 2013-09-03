@@ -6,7 +6,9 @@ This package is used to deploy a new node to a given environment on a newly crea
 These packages that are specified in the run list can be found in `cookbooks/` and they contain all of the `cookbooks/{cookbook}/recipes/*` code that is specified in the run list to be installed on the new system. Recipes are where commands and configuration for the system are defined. 
 
 ## Dependencies and Assumptions
-Before getting started using these commands, we assume that you have the [Perl AWS Tools] package installed. Do not continue unless it is fully installed and functional. Follow the steps here ([Perl AWS Tools]) to get started. 
+Before getting started using these commands, we assume that you have the [Perl AWS Tools] package installed. Do not continue unless it is fully installed and functional. Follow the steps here ([Perl AWS Tools]) to get started. To install, run the command below:
+
+	$ curl https://raw.github.com/timkay/aws/master/aws -o aws
 
 You need to have these setup with a valid AWS access_key_id and an access_secret_key to work and function with the account you want to boot instances to. 
 
