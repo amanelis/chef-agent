@@ -2,6 +2,7 @@
 
 # This runs as root on the server
 # Start: 
+#		base : curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1.sh | bash -s base
 # 	staging: curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1.sh | bash -s staging
 # 	production: curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1.sh | bash -s production
 
@@ -11,6 +12,10 @@ case "$1" in
     RETVAL=1
     exit $RETVAL
     ;;
+	base)
+		echo "Deploying a basic Platform server"
+		env = "base"
+		;;
   staging)
     echo "Deploying to Staging Environment"
 		env="staging"
@@ -45,8 +50,6 @@ if ! test -f "$chef_binary"; then
 		# Clone our chef repository
 		git clone https://github.com/amanelis/chef-agent.git
 fi &&
-
-echo $env
 
 # Excute Chef-solo
 $chef_binary -c $chef_directory/solo.rb -j $chef_directory/roles/$env.json
