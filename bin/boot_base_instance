@@ -42,3 +42,4 @@ puts "============================== SUCCESS =============================="
 puts "Instance id: #{instance[:id]}"
 puts "Instance fqdn: #{instance[:fqdn]}"
 puts "============================== SUCCESS =============================="
+exit 0
