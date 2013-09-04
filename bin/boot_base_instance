@@ -1,4 +1,4 @@
-#!/usr/bin/ruby
+#! /usr/bin/ruby
 
 require 'rubygems'
 require 'yaml'
@@ -42,4 +42,24 @@ puts "============================== SUCCESS =============================="
 puts "Instance id: #{instance[:id]}"
 puts "Instance fqdn: #{instance[:fqdn]}"
 puts "============================== SUCCESS =============================="
-exit 0
+puts ""
+
+puts "Configuring Chef and booting base image..."
+instructions = [
+  'sudo su',
+  'cd ~',
+  'curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1.sh | bash -s base'
+]
+credentials = { 
+  user: 'ec2-user', 
+  host: instance[:fqdn]
+}
+
+Net::SSH.start(credentials[:host], credentials[:user]) do |session|
+  instructions.each do |instruction|
+    printf "[#{credentials[:host]}]: #{instruction}\n"
+    session.exec instruction
+    session.loop
+  end
+end
+
