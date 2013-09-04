@@ -1,0 +1,44 @@
+#!/usr/bin/ruby
+
+require 'rubygems'
+require 'yaml'
+
+$stdout.sync = true
+
+puts "Reading AWS keys and setting as temp environment vars..."
+JENKINS_AWS_CREDENTIALS_PATH = '/private/signifyd/aws/aws-credentials.yml'
+credentials = YAML::load(File.open(JENKINS_AWS_CREDENTIALS_PATH))
+
+exit(1) if credentials['aws'].nil? || (credentials['aws']['access_key_id'].nil? || credentials['aws']['secret_access_key'].nil?)
+
+ENV['EC2_ACCESS_KEY'] = credentials['aws']['access_key_id']
+ENV['EC2_SECRET_KEY'] = credentials['aws']['secret_access_key']
+
+instance = {}
+
+puts "Booting an AWS EC2 instance..."
+run_instance_cmd  = `./aws run-instance ami-971758fe -i m1.small -k platform -g www -z us-east-1d --yaml`
+run_instance_data = YAML::load(run_instance_cmd)
+instance[:id]     = run_instance_data['instancesSet'][0]['instanceId']
+
+puts "Waiting for the instance to have a valid fqdn..."
+while true
+  sleep 1
+  print '.'
+  
+  describe_instance_cmd   = `./aws describe-instances #{instance[:id]} --yaml`
+  describe_instance_data  = YAML::load(describe_instance_cmd)
+  
+  if !describe_instance_data['reservationSet'][0]['instancesSet'].nil? 
+    if !describe_instance_data['reservationSet'][0]['instancesSet'][0]['dnsName'].nil?
+      instance[:fqdn] = describe_instance_data['reservationSet'][0]['instancesSet'][0]['dnsName']
+      puts ""
+      break
+    end
+  end
+end
+
+puts "============================== SUCCESS =============================="
+puts "Instance id: #{instance[:id]}"
+puts "Instance fqdn: #{instance[:fqdn]}"
+puts "============================== SUCCESS =============================="
