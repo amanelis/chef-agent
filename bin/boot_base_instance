@@ -17,7 +17,7 @@ ENV['EC2_SECRET_KEY'] = credentials['aws']['secret_access_key']
 instance = {}
 
 puts "Booting an AWS EC2 instance..."
-run_instance_cmd  = `./aws run-instance ami-971758fe -i m1.small -k platform -g www -z us-east-1d --yaml`
+run_instance_cmd  = `./bin/aws run-instance ami-971758fe -i m1.small -k platform -g www -z us-east-1d --yaml`
 run_instance_data = YAML::load(run_instance_cmd)
 instance[:id]     = run_instance_data['instancesSet'][0]['instanceId']
 
@@ -26,7 +26,7 @@ while true
   sleep 1
   print '.'
   
-  describe_instance_cmd   = `./aws describe-instances #{instance[:id]} --yaml`
+  describe_instance_cmd   = `./bin/aws describe-instances #{instance[:id]} --yaml`
   describe_instance_data  = YAML::load(describe_instance_cmd)
   
   if !describe_instance_data['reservationSet'][0]['instancesSet'].nil? 
