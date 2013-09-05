@@ -1,7 +1,6 @@
 #! /usr/bin/ruby
 
 require 'rubygems'
-require 'net/ssh'
 require 'yaml'
 
 $stdout.sync = true
@@ -41,24 +40,33 @@ end
 
 puts "Instance id: #{instance[:id]}"
 puts "Instance fqdn: #{instance[:fqdn]}"
+
+puts "Waiting for node to initialize, then ssh..."
+while true
+  sleep 5
+  print '.'
+  
+  begin 
+    break unless TCPSocket.new(instance[:fqdn], 22).nil?
+  rescue => e
+    next
+  end
+end
+
 puts "Configuring Chef and booting base image..."
 instructions = [
   'sudo su',
   'cd ~',
   'curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1.sh | bash -s base'
 ]
-host = { 
-  user: 'ec2-user', 
-  host: instance[:fqdn]
-}
 
-Net::SSH.start(host[:host], host[:user]) do |session|
+Net::SSH.start(instance[:fqdn], 'ec2-user') do |session|
   instructions.each do |instruction|
-    printf "[#{host[:host]}]: #{instruction}\n"
+    printf "#{instance[:fqdn]}: #{instruction}\n"
     session.exec instruction
     session.loop
   end
 end
 
 puts "============================== SUCCESS =============================="
-exit 0
+exit(0)
