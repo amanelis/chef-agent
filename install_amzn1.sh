@@ -14,7 +14,7 @@ case "$1" in
     ;;
 	base)
 		echo "Deploying a basic Platform server"
-		env = "base"
+		env= "base"
 		;;
   staging)
     echo "Deploying to Staging Environment"
