@@ -1,7 +1,6 @@
 #! /usr/bin/ruby
 
 require 'rubygems'
-require 'net/ssh'
 require 'yaml'
 
 $stdout.sync = true
@@ -61,7 +60,7 @@ if defined?(Net::SSH)
   end
 else
   puts " execing manual ssh"
-  `ssh -o StrictHostKeyChecking=no ec2-user@#{instance[:fqdn]} "#{instructions[0]}"`
+  `ssh -o StrictHostKeyChecking=no -t ec2-user@#{instance[:fqdn]} "#{instructions[0]}"`
 end
 
 puts "============================== SUCCESS =============================="
