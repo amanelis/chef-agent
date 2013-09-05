@@ -38,12 +38,8 @@ while true
   end
 end
 
-puts "============================== SUCCESS =============================="
 puts "Instance id: #{instance[:id]}"
 puts "Instance fqdn: #{instance[:fqdn]}"
-puts "============================== SUCCESS =============================="
-puts ""
-
 puts "Configuring Chef and booting base image..."
 instructions = [
   'sudo su',
@@ -63,3 +59,5 @@ Net::SSH.start(credentials[:host], credentials[:user]) do |session|
   end
 end
 
+puts "============================== SUCCESS =============================="
+exit 0
