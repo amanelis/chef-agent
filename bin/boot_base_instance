@@ -40,20 +40,12 @@ end
 
 puts "Instance id: #{instance[:id]}"
 puts "Instance fqdn: #{instance[:fqdn]}"
+puts "Waiting for instance to respond to ssh, sleeping for 5 minutes..."
 
-puts "Waiting for node to initialize, then ssh..."
-while true
-  sleep 5
-  print '.'
-  
-  begin 
-    break unless TCPSocket.new(instance[:fqdn], 22).nil?
-  rescue => e
-    next
-  end
-end
+sleep 360
 
 puts "Configuring Chef and booting base image..."
+sleep 2
 instructions = [
   'sudo su',
   'cd ~',
