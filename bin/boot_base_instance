@@ -1,6 +1,7 @@
 #! /usr/bin/ruby
 
 require 'rubygems'
+require 'net/ssh'
 require 'yaml'
 
 $stdout.sync = true
@@ -52,11 +53,15 @@ instructions = [
 if defined?(Net::SSH)
   puts " execing auto ssh"
   Net::SSH.start(instance[:fqdn], 'ec2-user') do |session|
-    instructions.each do |instruction|
-      printf "#{instance[:fqdn]}: #{instruction}\n"
-      session.exec instruction
-      session.loop
-    end 
+		session.open_channel do |ch|
+  		ch.request_pty
+  		ch.exec instructions[0]
+		end	
+    #instructions.each do |instruction|
+    #  printf "#{instance[:fqdn]}: #{instruction}\n"
+    #  session.exec instruction
+    #  session.loop
+    #end 
   end
 else
   puts " execing manual ssh"
