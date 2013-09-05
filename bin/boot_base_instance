@@ -60,7 +60,11 @@ if defined?(Net::SSH)
   end
 else
   puts " execing manual ssh"
-  `ssh -o StrictHostKeyChecking=no -t -t ec2-user@#{instance[:fqdn]} "#{instructions[0]}"`
+	command = "ssh -o StrictHostKeyChecking=no -t -t ec2-user@#{instance[:fqdn]} #{instructions[0]}"
+	puts "RUNNING ========================="
+	puts command
+	puts "RUNNING ========================="
+	`#{command}`
 end
 
 puts "============================== SUCCESS =============================="
