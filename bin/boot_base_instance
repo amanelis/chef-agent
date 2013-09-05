@@ -24,7 +24,7 @@ instance[:id]     = run_instance_data['instancesSet'][0]['instanceId']
 puts "Waiting for the instance to have a valid fqdn..."
 while true
   sleep 1
-  print '.'
+  print '.' 
   
   describe_instance_cmd   = `./bin/aws describe-instances #{instance[:id]} --yaml`
   describe_instance_data  = YAML::load(describe_instance_cmd)
@@ -34,30 +34,33 @@ while true
       instance[:fqdn] = describe_instance_data['reservationSet'][0]['instancesSet'][0]['dnsName']
       puts ""
       break
-    end
-  end
+    end 
+  end 
 end
 
 puts "Instance id: #{instance[:id]}"
 puts "Instance fqdn: #{instance[:fqdn]}"
 puts "Waiting for instance to respond to ssh, sleeping for 6 minutes..."
 
-sleep 360
+sleep 360 
 
-puts "Configuring Chef and booting base image..."
-sleep 2
-instructions = [
-  'sudo su',
-  'cd ~',
-  'curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1.sh | bash -s base'
+puts "Connecting via ssh..."
+instructions = [ 
+  'sudo sh -c "cd /root; curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1.sh | bash -s base"'
 ]
 
-Net::SSH.start(instance[:fqdn], 'ec2-user') do |session|
-  instructions.each do |instruction|
-    printf "#{instance[:fqdn]}: #{instruction}\n"
-    session.exec instruction
-    session.loop
+if defined?(Net::SSH)
+  puts " execing auto ssh"
+  Net::SSH.start(instance[:fqdn], 'ec2-user') do |session|
+    instructions.each do |instruction|
+      printf "#{instance[:fqdn]}: #{instruction}\n"
+      session.exec instruction
+      session.loop
+    end 
   end
+else
+  puts " execing manual ssh"
+  `ssh -o StrictHostKeyChecking=no ec2-user@#{instance[:fqdn]} "#{instructions[0]}"`
 end
 
 puts "============================== SUCCESS =============================="
