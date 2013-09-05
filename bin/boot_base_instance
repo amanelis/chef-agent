@@ -40,9 +40,9 @@ end
 
 puts "Instance id: #{instance[:id]}"
 puts "Instance fqdn: #{instance[:fqdn]}"
-puts "Waiting for instance to respond to ssh, sleeping for 5 minutes..."
+puts "Waiting for instance to respond to ssh, sleeping for 4 minutes..."
 
-sleep 300 
+sleep 240
 
 puts "Connecting via ssh..."
 instructions = [ 
