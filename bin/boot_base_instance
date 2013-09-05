@@ -1,6 +1,7 @@
 #! /usr/bin/ruby
 
 require 'rubygems'
+require 'net/ssh'
 require 'yaml'
 
 $stdout.sync = true
@@ -46,14 +47,14 @@ instructions = [
   'cd ~',
   'curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1.sh | bash -s base'
 ]
-credentials = { 
+host = { 
   user: 'ec2-user', 
   host: instance[:fqdn]
 }
 
-Net::SSH.start(credentials[:host], credentials[:user]) do |session|
+Net::SSH.start(host[:host], host[:user]) do |session|
   instructions.each do |instruction|
-    printf "[#{credentials[:host]}]: #{instruction}\n"
+    printf "[#{host[:host]}]: #{instruction}\n"
     session.exec instruction
     session.loop
   end
