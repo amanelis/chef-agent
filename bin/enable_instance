@@ -77,7 +77,7 @@ OptionParser.new do |parser|
     if !default_envs.include?(environment) 
       puts "You typed '\033[22;31m#{setting}\033[37m' for the environment, must be one of the following:"
       puts "  [#{default_envs.join(', ')}]"
-      exit
+      exit 1
     else
       options[:env] = setting
     end
@@ -86,7 +86,7 @@ OptionParser.new do |parser|
   parser.on("-i", "--instances ARRAY", Array, "\033[32mRequired\033[37m. Pass a list of the instances you want added to the load balancer") do |setting|
     if setting.empty?
       puts "You passed an invalid list of AWS instances, please try again."
-      exit
+      exit 1
     else
       setting.collect { |instance| 
         next if options[:configuration][:aws][:ec2][:instances].include?(instance)
@@ -105,8 +105,18 @@ OptionParser.new do |parser|
 
   parser.on_tail("-h", "--help", "--usage", "Show this usage message and quit.") do |setting|
     puts parser.help
-    exit
+    exit 1
   end
 end.parse!(ARGV)
+
+if options[:configuration][:aws][:ec2][:instances].empty? || options[:configuration][:aws][:ec2][:instances].nil?
+  puts "No valid '\033[22;31m-i OR --instances\033[37m' passed. You must pipe a list of AWS instances into this executable or pass in as a comma seperated list."
+  exit 1
+end
+
+if options[:configuration][:aws][:elb].empty? || options[:configuration][:aws][:elb].nil?
+  puts "No valid '\033[22;31m-l OR --loadbalancer\033[37m' passed. You must specify a loadbalancer to add the nodes to."
+  exit 1
+end
 
 puts options.inspect
