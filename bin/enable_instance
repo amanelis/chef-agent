@@ -21,19 +21,14 @@ require 'aws-sdk'
 require 'net/ssh'
 
 options = {}
+options[:env] = :test
 options[:stdout] = true
 options[:configuration] = {
   :aws => {
     :credentials_file => '/private/signifyd/aws/aws-credentials.yml',
+    :elb => '',
     :ec2 => {
-      :default_sleep_second => 240,
-      :instance_count => 1,
-      :instance => {
-        :image_id => 'ami-971758fe',
-        :key_name => 'platform',
-        :security_groups => ['www'],
-        :availability_zone => 'us-east-1a'
-      }
+      :instances => []
     }
   }
 }
@@ -59,22 +54,49 @@ else
   exit 1
 end
 
+if $stdin.tty?
+  ARGV.each do |line|
+  end
+else
+  $stdin.each_line do |line|
+    if line =~ /i-([a-zA-z0-9]{8})$/ 
+      options[:configuration][:aws][:ec2][:instances] << line.strip
+    end
+  end
+end
+
 OptionParser.new do |parser|
   parser.banner = "USAGE: boot_base_instance [options]"
   parser.separator ""
   parser.separator "Specific options:"
 
-  parser.on("-n", "--number-of-nodes INTEGER", "Pass the number of servers to boot up and run Chef on.") do |setting|
-    begin
-      setting = Integer(setting)
-    rescue ArgumentError => e
-      puts "--------------------------------------------------------------------"
-      puts "\033[22;31mInvalid input, please give an integer only.#{options[:configuration][:aws][:credentials_file]}\033[37m"
-      puts "--------------------------------------------------------------------"
-      exit 1
+  parser.on("-e", "--env ENVIRONMENT", "\033[32mRequired\033[37m. Pass the environment you would like to boot there server in.") do |setting|
+    default_envs = [:test, :staging, :production]
+    environment  = setting.strip.downcase.to_sym
+
+    if !default_envs.include?(environment) 
+      puts "You typed '\033[22;31m#{setting}\033[37m' for the environment, must be one of the following:"
+      puts "  [#{default_envs.join(', ')}]"
+      exit
+    else
+      options[:env] = setting
     end
-    
-    options[:configuration][:aws][:ec2][:instance_count] = setting
+  end
+  
+  parser.on("-i", "--instances ARRAY", Array, "\033[32mRequired\033[37m. Pass a list of the instances you want added to the load balancer") do |setting|
+    if setting.empty?
+      puts "You passed an invalid list of AWS instances, please try again."
+      exit
+    else
+      setting.collect { |instance| 
+        next if options[:configuration][:aws][:ec2][:instances].include?(instance)
+        options[:configuration][:aws][:ec2][:instances] << instance
+      }
+    end
+  end
+
+  parser.on("-l", "--loadbalancer LOAD_BALANCER", "\033[32mRequired\033[37m. Pass the load balancer the nodes will be added to.") do |setting|
+    options[:configuration][:aws][:elb] = setting
   end
   
   parser.on("-s", "--sync-output BOOLEAN", "Syncs stdout with console so wait progress is enabled. Default enabled.") do |setting|
@@ -86,41 +108,3 @@ OptionParser.new do |parser|
     exit
   end
 end.parse!(ARGV)
-
-# Sync standard out
-$stdout.sync = options[:stdout]
-
-# Create a few instances to communicate with AWS
-EC2 = AWS::EC2.new
-S3  = AWS::S3.new
-
-# Save all instances created
-instances = []
-
-# # Iterate for x times to create number of instances
-# options[:configuration][:aws][:ec2][:instance_count].times.collect { |ndx| 
-#   instances << EC2.instances.create(options[:configuration][:aws][:ec2][:instance])
-# }
-# 
-# # Sleep and wait for currently booting images to be ready
-# sleep 2 while instances.any? { |i| i.status == :pending }
-# 
-# puts "Waiting for instance(s) to respond to ssh, sleeping for #{options[:configuration][:aws][:ec2][:default_sleep_second]/60} minutes..."
-# sleep options[:configuration][:aws][:ec2][:default_sleep_second]
-# 
-# # Iterate through instances and install chef, this should be in threads
-# instances.collect { |instance| 
-#   puts " => starting Chef on instance #{instance.id} at #{instance.dns_name}"
-#   Net::SSH.start(instance.dns_name, 'ec2-user') do |session|
-#     session.open_channel do |ch|
-#       ch.request_pty
-#       ch.exec 'sudo sh -c "cd /root; curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1.sh | bash -s base"'
-#     end 
-#   end
-# }
-# 
-# puts instances.collect { |i| i.id }
-
-puts options[:configuration][:aws][:ec2][:instance_count].times.collect { |ndx|
-  "i-#{(rand * 100000000).floor}"
-}
