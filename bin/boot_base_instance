@@ -1,5 +1,6 @@
 #! /usr/bin/ruby
 
+puts "Installing dependencies"
 system('gem install aws-sdk --no-ri --no-rdoc')
 system('gem install net-ssh --no-ri --no-rdoc')
 
