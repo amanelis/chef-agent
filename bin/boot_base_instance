@@ -1,5 +1,21 @@
 #! /usr/bin/ruby -i
 
+# Author: Alex Manelis <manelis@signifyd.com>
+# Synopsis: This script is ment to boot instances on AWS and configure them
+# using the Chef scripts that are part of this package. This script has
+# one optional argument. Pass a -n flag to specify how many nodes you want
+# to boot up and run chef on under the Signifyd AWS account. This script will
+# always default to using the "base" Chef script for its just configuring a 
+# base image. If the -n switch is left blank, the script will assume "1" 
+# instance to be started.
+#
+# Usage:
+# 
+# Given the following command, it will boot 2 instances and return their
+# Amazon AWS EC2 instance ids.
+#
+#   $ bin/boot_base_instance -n 2
+
 begin 
   orig_stdout = $stdout.dup
   $stdout.reopen('/dev/null', 'w')
@@ -118,6 +134,19 @@ instances = []
 #     end 
 #   end
 # }
+# 
+# instances.inject(Thread.new {}) do |t, instance|
+#   puts " => thread executing ssh on #{instance.id} at #{instance.dns_name}"
+#   Thread.new do
+#     Net::SSH.start(instance.dns_name, 'ec2-user') do |session|
+#       session.open_channel do |ch|
+#         ch.request_pty
+#         ch.exec 'sudo sh -c "cd /root; curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1.sh | bash -s base"'
+#       end 
+#     end
+#     t.join
+#   end
+# end.join
 # 
 # puts instances.collect { |i| i.id }
 
