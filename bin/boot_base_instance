@@ -1,5 +1,8 @@
 #! /usr/bin/ruby
 
+execute('gem install aws-sdk --no-ri --no-rdoc')
+execute('gem install net-ssh --no-ri --no-rdoc')
+
 require 'rubygems'
 require 'aws-sdk'
 require 'net/ssh'
