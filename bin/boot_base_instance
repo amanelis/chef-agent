@@ -1,76 +1,119 @@
 #! /usr/bin/ruby
 
 require 'rubygems'
+require 'aws-sdk'
 require 'net/ssh'
+require 'optparse'
 require 'yaml'
 
-$stdout.sync = true
+options = {}
+options[:stdout] = true
+options[:verbose] = false
+options[:configuration] = {
+  :aws => {
+    :credentials_file => '/private/signifyd/aws/aws-credentials.yml',
+    :ec2 => {
+      :default_sleep_second => 240,
+      :instance_count => 1,
+      :instance => {
+        :image_id => 'ami-971758fe',
+        :key_name => 'platform',
+        :security_groups => ['www'],
+        :availability_zone => 'us-east-1a'
+      }
+    }
+  }
+}
 
-puts "Reading AWS keys and setting as temp environment vars..."
-JENKINS_AWS_CREDENTIALS_PATH = '/private/signifyd/aws/aws-credentials.yml'
-credentials = YAML::load(File.open(JENKINS_AWS_CREDENTIALS_PATH))
-
-exit(1) if credentials['aws'].nil? || (credentials['aws']['access_key_id'].nil? || credentials['aws']['secret_access_key'].nil?)
-
-ENV['EC2_ACCESS_KEY'] = credentials['aws']['access_key_id']
-ENV['EC2_SECRET_KEY'] = credentials['aws']['secret_access_key']
-
-instance = {}
-
-puts "Booting an AWS EC2 instance..."
-run_instance_cmd  = `./bin/aws run-instance ami-971758fe -i m1.small -k platform -g www -z us-east-1d --yaml`
-run_instance_data = YAML::load(run_instance_cmd)
-instance[:id]     = run_instance_data['instancesSet'][0]['instanceId']
-
-puts "Waiting for the instance to have a valid fqdn..."
-while true
-  sleep 1
-  print '.' 
+# First check and see if keys exist
+if File.exists?(options[:configuration][:aws][:credentials_file]) 
+  credentials = YAML::load(File.open(options[:configuration][:aws][:credentials_file], 'r'))
   
-  describe_instance_cmd   = `./bin/aws describe-instances #{instance[:id]} --yaml`
-  describe_instance_data  = YAML::load(describe_instance_cmd)
+  # Set environment variables, this basically exports this to the current
+  # environment in the running shell.
+  ENV['EC2_ACCESS_KEY'] = credentials['aws']['access_key_id']
+  ENV['EC2_SECRET_KEY'] = credentials['aws']['secret_access_key']
   
-  if !describe_instance_data['reservationSet'][0]['instancesSet'].nil? 
-    if !describe_instance_data['reservationSet'][0]['instancesSet'][0]['dnsName'].nil?
-      instance[:fqdn] = describe_instance_data['reservationSet'][0]['instancesSet'][0]['dnsName']
-      puts ""
-      break
-    end 
-  end 
-end
-
-puts "Instance id: #{instance[:id]}"
-puts "Instance fqdn: #{instance[:fqdn]}"
-puts "Waiting for instance to respond to ssh, sleeping for 4 minutes..."
-
-sleep 240
-
-puts "Connecting via ssh..."
-instructions = [ 
-  'sudo sh -c "cd /root; curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1.sh | bash -s base"'
-]
-
-if defined?(Net::SSH)
-  puts " execing auto ssh"
-  Net::SSH.start(instance[:fqdn], 'ec2-user') do |session|
-		session.open_channel do |ch|
-  		ch.request_pty
-  		ch.exec instructions[0]
-		end	
-    #instructions.each do |instruction|
-    #  printf "#{instance[:fqdn]}: #{instruction}\n"
-    #  session.exec instruction
-    #  session.loop
-    #end 
-  end
+  options[:configuration][:aws][:access_key_id]     = credentials['aws']['access_key_id']
+  options[:configuration][:aws][:secret_access_key] = credentials['aws']['secret_access_key']
+  
+  # Configure AWS
+  AWS.config(:access_key_id => options[:configuration][:aws][:access_key_id], :secret_access_key => options[:configuration][:aws][:secret_access_key])
 else
-  puts " execing manual ssh"
-	command = "ssh -o StrictHostKeyChecking=no -t -t ec2-user@#{instance[:fqdn]} #{instructions[0]}"
-	puts "RUNNING ========================="
-	puts command
-	puts "RUNNING ========================="
-	`#{command}`
+  puts "--------------------------------------------------------------------"
+  puts "\033[22;31mCould not find a valid credential file at #{JENKINS_AWS_CREDENTIALS_PATH}\033[37m"
+  puts "--------------------------------------------------------------------"
+  exit 1
 end
 
-puts "============================== SUCCESS =============================="
-exit(0)
+OptionParser.new do |parser|
+  parser.banner = "USAGE: boot_base_instance [options]"
+  parser.separator ""
+  parser.separator "Specific options:"
+
+  parser.on("-n", "--number-of-nodes [1 || 3 || 10]", "Pass the number of servers to boot up and run Chef on.") do |setting|
+    exit 1 if setting.nil? || setting == ''
+    
+    begin
+      setting = Integer(setting)
+    rescue ArgumentError => e
+      puts "--------------------------------------------------------------------"
+      puts "\033[22;31mInvalid input, please give an integer only.#{JENKINS_AWS_CREDENTIALS_PATH}\033[37m"
+      puts "--------------------------------------------------------------------"
+      exit 1
+    end
+    
+    options[:configuration][:aws][:ec2][:instance_count] = setting
+  end
+  
+  parser.on("-v", "--verbose", "Runs the application in versbose mode for debugging.") do |setting|
+    options[:verbose] = setting
+  end
+  
+  parser.on("-s", "--sync-output [boolean]", "Syncs stdout with console so wait progress is enabled. Default enabled.") do |setting|
+    options[:stdout] = setting
+  end
+
+  parser.on_tail("-h", "--help", "--usage", "Show this usage message and quit.") do |setting|
+    puts parser.help
+    exit
+  end
+end.parse!(ARGV)
+
+# Sync standard out
+$stdout.sync = options[:stdout]
+
+# Create a few instances to communicate with AWS
+EC2 = AWS::EC2.new
+S3  = AWS::S3.new
+
+# Save all instances created
+instances = []
+
+# Boot the image
+puts "Booting an AWS EC2 instance..."
+
+# Iterate for x times to create number of instances
+options[:configuration][:aws][:ec2][:instance_count].times.collect { |ndx| 
+  instances << EC2.instances.create(options[:configuration][:aws][:ec2][:instance])
+}
+
+# Sleep and wait for currently booting images to be ready
+sleep 2 while instances.any? { |i| i.status == :pending }
+
+puts "Waiting for instance(s) to respond to ssh, sleeping for #{options[:configuration][:aws][:ec2][:default_sleep_second]/60} minutes..."
+sleep options[:configuration][:aws][:ec2][:default_sleep_second]
+
+# Iterate through instances and install chef, this should be in threads
+instances.collect { |instance| 
+  puts " => starting Chef on #{instance.id} => #{instance.dns_name}"
+  Net::SSH.start(instance.dns_name, 'ec2-user') do |session|
+    session.open_channel do |ch|
+      ch.request_pty
+      ch.exec 'sudo sh -c "cd /root; curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1.sh | bash -s base"'
+    end 
+  end
+}
+
+puts ""
+return instances.collect(&:id)
