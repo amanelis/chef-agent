@@ -1,0 +1,6 @@
+#! /usr/bin/ruby
+
+lines = []
+ARGF.read.each_line { |file| lines << file.strip }
+
+p lines
