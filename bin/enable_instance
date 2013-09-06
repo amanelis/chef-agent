@@ -1,5 +1,42 @@
 #! /usr/bin/ruby -i
 
+# Author: Alex Manelis <manelis@signifyd.com>
+# Synopsis: This script is ment to do one thing. Take a list of AWS EC2 instance
+# ids and add them to a given load balancer. Baiscally it can be done 2 ways. 
+# 
+# To start, there are two required switches that must be passed.
+# -l/--loadbalancer => require a valid loadbalancer to be given.
+# -e/--environment  => require the given environment to start play.
+#
+# Once these two switches are enabled, you can do one of the following ways.
+#
+# 1) Pass instances via STDIN, one on each line as follows:
+# i-8rhfjsk3
+# i-208gh420
+# and this script will grab those and add them to the instances array, there for
+# making the -i/--instances flag optional. As for you can still manually pass in
+# instances using that flag and they will get added to the instances array under
+# the options hash.
+#
+# 2) Pass instances via the -i/--instances switch. Be sure they are in a comma
+# seperated list with no spaces as follows:
+# -i i-8rhfjsk3,i-208gh420
+# This will then add these instances to the options instances array
+#
+# From this point, everything will be valid if you have these three options set.
+# 
+# Examples:
+# Running via the first option number #1
+#   Given command (boot_base_instance) will create 2 instances and then pipe the 
+#   EC2 instance IDs into
+#   
+#   $ bin/boot_base_instance -n 2 | bin/enable_instance -l aws.staging -b build_url
+# 
+#   Given command (boot_base_instance) will enable 2 instances with their build
+#   $ bin/enable_instance -l aws.staging -b build_url -i i-2408hg,i-f02fhf
+
+# Make -l optional, so you can have the servers started, but not put in ELB
+
 begin 
   orig_stdout = $stdout.dup
   $stdout.reopen('/dev/null', 'w')
@@ -26,9 +63,15 @@ options[:stdout] = true
 options[:configuration] = {
   :aws => {
     :credentials_file => '/private/signifyd/aws/aws-credentials.yml',
-    :elb => '',
+    :elb => nil,
     :ec2 => {
       :instances => []
+    },
+    :s3 => {
+      :bucket => nil,
+      :build_number => nil,
+      :build_path => nil,
+      :build_url => nil
     }
   }
 }
@@ -54,10 +97,7 @@ else
   exit 1
 end
 
-if $stdin.tty?
-  ARGV.each do |line|
-  end
-else
+unless $stdin.tty?
   $stdin.each_line do |line|
     if line.strip =~ /^i-([a-zA-Z0-9]{8})$/ 
       options[:configuration][:aws][:ec2][:instances] << line.strip
@@ -65,25 +105,21 @@ else
   end
 end
 
+# Build a few objets we will need in OptionParser and throughout the script.
+EC2 = AWS::EC2.new
+ELB = AWS::ELB.new
+AS3 = AWS::S3.new
+
+# Get all load balancers and EC2 instances under account.
+load_balancers = ELB.load_balancers
+ec2_instances  = EC2.instances
+
 OptionParser.new do |parser|
   parser.banner = "USAGE: boot_base_instance [options]"
   parser.separator ""
   parser.separator "Specific options:"
-
-  parser.on("-e", "--env ENVIRONMENT", "\033[32mRequired\033[37m. Pass the environment you would like to boot there server in.") do |setting|
-    default_envs = [:test, :staging, :production]
-    environment  = setting.strip.downcase.to_sym
-
-    if !default_envs.include?(environment) 
-      puts "You typed '\033[22;31m#{setting}\033[37m' for the environment, must be one of the following:"
-      puts "  [#{default_envs.join(', ')}]"
-      exit 1
-    else
-      options[:env] = setting
-    end
-  end
   
-  parser.on("-i", "--instances ARRAY", Array, "\033[32mRequired\033[37m. Pass a list of the instances you want added to the load balancer") do |setting|
+  parser.on("-i", "--instances ARRAY", Array, "\033[32mRequired\033[37m. Pass a comma seperated list of EC2 instance ids that will be booted with build.") do |setting|
     if setting.empty?
       puts "You passed an invalid list of AWS instances, please try again."
       exit 1
@@ -94,29 +130,99 @@ OptionParser.new do |parser|
       }
     end
   end
+  
+  parser.on("-b", "--buildurl S3_URL_TO_BUILD", "\033[32mRequired\033[37m. Pass the S3 url to the exact build that will be launched on new instance(s).") do |setting|
+    if setting.nil?
+      puts "You passed in invalid argument for switch: -b | --buildurl, please try again."
+      exit 1
+    else
+      if setting =~ /^https:\/\/s3.amazonaws.com\//
+        full_build_url = setting.strip.dup
+        
+        # "com.signifyd.prod"
+        bucket_path = full_build_url.gsub(/^https:\/\/s3.amazonaws.com\//, '').gsub(/\/(.*)/, '')
+        
+        # "149-signifydplatform-1.0-SNAPSHOT.zip"
+        build_path  = full_build_url.gsub(/^https:\/\/s3.amazonaws.com\/(.*)\//, '')
+        
+        # "prod"
+        environment = full_build_url.gsub(/^https:\/\/s3.amazonaws.com\/com.signifyd\./, '').gsub(/\/(.*)$/, '')
+        
+        # "149"
+        build_number = build_path.gsub(/-(.*)$/, '')
+        
+        options[:configuration][:aws][:s3][:bucket]       = bucket_path
+        options[:configuration][:aws][:s3][:build_number] = build_number
+        options[:configuration][:aws][:s3][:build_path]   = build_path
+        options[:configuration][:aws][:s3][:build_url]    = full_build_url
+        
+        case environment
+        when "prod"
+          options[:env] = :production
+        when "staging"
+          options[:env] = :staging
+        end
+      else
+        puts "Must be a valid S3 url for switch: -b | --buildurl, please try again."
+        exit 1
+      end
+    end
+  end
 
-  parser.on("-l", "--loadbalancer LOAD_BALANCER", "\033[32mRequired\033[37m. Pass the load balancer the nodes will be added to.") do |setting|
-    options[:configuration][:aws][:elb] = setting
+  parser.on("-l", "--loadbalancer LOAD_BALANCER", "\033[35mOptional\033[37m. Pass the load balancer (AWS NAME) the nodes will be added to.") do |setting|
+    if setting.nil?
+      puts "You passed in invalid argument for switch: -l | --loadbalancer, please try again."
+      exit 1
+    else
+      if load_balancers.collect(&:name).include?(setting.strip)
+        options[:configuration][:aws][:elb] = setting
+      else
+        puts "Your argument (\033[35m#{setting}\033[37m) for -l | --loadbalancer was not found under the AWS account connected, please try again."
+        exit 1
+      end
+    end
   end
   
-  parser.on("-s", "--sync-output BOOLEAN", "Syncs stdout with console so wait progress is enabled. Default enabled.") do |setting|
+  parser.on("-s", "--sync-output BOOLEAN", "\033[35mOptional\033[37m. Syncs stdout with console so wait progress is enabled. Default enabled.") do |setting|
     options[:stdout] = setting
   end
 
-  parser.on_tail("-h", "--help", "--usage", "Show this usage message and quit.") do |setting|
+  parser.on_tail("-h", "--help", "--usage", "\033[36mHelp\033[37m. Show this usage message and quit.") do |setting|
     puts parser.help
     exit 1
   end
 end.parse!(ARGV)
 
+# Sync standard out
+$stdout.sync = options[:stdout]
+
+# Check for nil or empty instances, must be present to continue and must be in AWS account to continue as well.
 if options[:configuration][:aws][:ec2][:instances].empty? || options[:configuration][:aws][:ec2][:instances].nil?
   puts "No valid '\033[22;31m-i OR --instances\033[37m' passed. You must pipe a list of AWS instances into this executable or pass in as a comma seperated list."
   exit 1
+else 
+  # Source instances in instance array and checks to see if instances passed via STDIN are actually in account. For testing, comment this out otherwise
+  # this code will throw away fake instance IDs that are not acutal servers in account.
+  #
+  # ec2_instance_ids = ec2_instances.collect(&:id)
+  # options[:configuration][:aws][:ec2][:instances] = options[:configuration][:aws][:ec2][:instances].inject([]) { |a, i|
+  #   next a unless ec2_instance_ids.include?(i)
+  #   a << instance
+  # }
 end
 
-if options[:configuration][:aws][:elb].empty? || options[:configuration][:aws][:elb].nil?
-  puts "No valid '\033[22;31m-l OR --loadbalancer\033[37m' passed. You must specify a loadbalancer to add the nodes to."
-  exit 1
-end
+p options
 
-puts options.inspect
+# Start by building the instance once again
+# options[:configuration][:aws][:ec2][:instances].inject(Thread.new {}) do |t, instance|
+#   p " => running Chef Platform[#{options[:env].to_s}] on #{instance.id} at #{instance.dns_name}..."
+#   Thread.new do
+#     Net::SSH.start(instance.dns_name, 'ec2-user') do |session|
+#       session.open_channel do |ch|
+#         ch.request_pty
+#         ch.exec "sudo sh -c \"cd /root; curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1.sh | bash -s #{options[:env].to_s}\""
+#       end 
+#     end
+#     t.join
+#   end
+# end.join
