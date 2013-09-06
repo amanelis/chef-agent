@@ -110,7 +110,7 @@ sleep options[:configuration][:aws][:ec2][:default_sleep_second]
 
 # Iterate through instances and install chef, this should be in threads
 instances.collect { |instance| 
-  puts " => starting Chef on #{instance.id} => #{instance.dns_name}"
+  puts " => starting Chef on instance #{instance.id} at #{instance.dns_name}"
   Net::SSH.start(instance.dns_name, 'ec2-user') do |session|
     session.open_channel do |ch|
       ch.request_pty
