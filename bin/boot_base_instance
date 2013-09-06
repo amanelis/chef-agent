@@ -122,5 +122,5 @@ instances = []
 # puts instances.collect { |i| i.id }
 
 puts options[:configuration][:aws][:ec2][:instance_count].times.collect { |ndx|
-  "i-#{(rand * 100000000).floor}"
+  "i-#{(12345678 + rand(81))}"
 }
