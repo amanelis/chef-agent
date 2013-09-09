@@ -38,6 +38,7 @@ require 'net/ssh'
 
 options = {}
 options[:stdout] = true
+options[:test_mode] = false
 options[:configuration] = {
   :aws => {
     :credentials_file => '/private/signifyd/aws/aws-credentials.yml',

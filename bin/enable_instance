@@ -34,8 +34,9 @@
 # 
 #   Given command (boot_base_instance) will enable 2 instances with their build
 #   $ bin/enable_instance -l aws.staging -b build_url -i i-2408hg,i-f02fhf
-
-# Make -l optional, so you can have the servers started, but not put in ELB
+#
+#
+# load_balancers don't put instances into loadbalancer unless play is running
 
 begin 
   orig_stdout = $stdout.dup
@@ -60,6 +61,7 @@ require 'net/ssh'
 options = {}
 options[:env] = :test
 options[:stdout] = true
+options[:test_mode] = false
 options[:configuration] = {
   :aws => {
     :credentials_file => '/private/signifyd/aws/aws-credentials.yml',
@@ -139,22 +141,14 @@ OptionParser.new do |parser|
       if setting =~ /^https:\/\/s3.amazonaws.com\//
         full_build_url = setting.strip.dup
         
-        # "com.signifyd.prod"
-        bucket_path = full_build_url.gsub(/^https:\/\/s3.amazonaws.com\//, '').gsub(/\/(.*)/, '')
-        
-        # "149-signifydplatform-1.0-SNAPSHOT.zip"
-        build_path  = full_build_url.gsub(/^https:\/\/s3.amazonaws.com\/(.*)\//, '')
-        
-        # "prod"
-        environment = full_build_url.gsub(/^https:\/\/s3.amazonaws.com\/com.signifyd\./, '').gsub(/\/(.*)$/, '')
-        
-        # "149"
-        build_number = build_path.gsub(/-(.*)$/, '')
+        bucket_path   = full_build_url.gsub(/^https:\/\/s3.amazonaws.com\//, '').gsub(/\/(.*)/, '')                         # "com.signifyd.prod"
+        environment   = full_build_url.gsub(/^https:\/\/s3.amazonaws.com\/com.signifyd\./, '').gsub(/\/(.*)$/, '')          # "prod"
+        build_number  = full_build_url.gsub(/https:\/\/s3.amazonaws.com\/(.*)\/platform-builds\//, '').gsub('/', '').strip  # "149"
         
         options[:configuration][:aws][:s3][:bucket]       = bucket_path
         options[:configuration][:aws][:s3][:build_number] = build_number
-        options[:configuration][:aws][:s3][:build_path]   = build_path
         options[:configuration][:aws][:s3][:build_url]    = full_build_url
+        options[:configuration][:aws][:s3][:build_path]   = "platform-builds/#{build_number}/signifydplatform-1.0-SNAPSHOT.zip"
         
         case environment
         when "prod"
@@ -186,6 +180,10 @@ OptionParser.new do |parser|
   parser.on("-s", "--sync-output BOOLEAN", "\033[35mOptional\033[37m. Syncs stdout with console so wait progress is enabled. Default enabled.") do |setting|
     options[:stdout] = setting
   end
+  
+  parser.on("--test", "Enable test environment and don't do any instance work") do |setting|
+    options[:test_mode] = true
+  end
 
   parser.on_tail("-h", "--help", "--usage", "\033[36mHelp\033[37m. Show this usage message and quit.") do |setting|
     puts parser.help
@@ -196,22 +194,36 @@ end.parse!(ARGV)
 # Sync standard out
 $stdout.sync = options[:stdout]
 
+# Check for a valid build number that should have been passed to the script
+if options[:configuration][:aws][:s3][:bucket].nil? || options[:configuration][:aws][:s3][:build_number].nil? || 
+   options[:configuration][:aws][:s3][:build_path].nil? || options[:configuration][:aws][:s3][:build_url].nil?
+  puts "No valid '\033[22;31m-b OR --buildurl\033[37m' passed. You must pass the S3 buildurl to the build you want installed on the servers."
+  exit 1
+end
+
 # Check for nil or empty instances, must be present to continue and must be in AWS account to continue as well.
 if options[:configuration][:aws][:ec2][:instances].empty? || options[:configuration][:aws][:ec2][:instances].nil?
   puts "No valid '\033[22;31m-i OR --instances\033[37m' passed. You must pipe a list of AWS instances into this executable or pass in as a comma seperated list."
   exit 1
 else 
-  # Source instances in instance array and checks to see if instances passed via STDIN are actually in account. For testing, comment this out otherwise
-  # this code will throw away fake instance IDs that are not acutal servers in account.
-  #
-  # ec2_instance_ids = ec2_instances.collect(&:id)
-  # options[:configuration][:aws][:ec2][:instances] = options[:configuration][:aws][:ec2][:instances].inject([]) { |a, i|
-  #   next a unless ec2_instance_ids.include?(i)
-  #   a << instance
-  # }
+  # Source instances in instance array and checks to see if instances passed via STDIN are actually in AWS account. For testing, included the --test
+  # flag as an cmd line argument and it won't check the account for valid instances
+  
+  ec2_instance_ids = ec2_instances.collect(&:id)
+  options[:configuration][:aws][:ec2][:instances] = options[:configuration][:aws][:ec2][:instances].inject([]) { |a, i|
+    next a unless ec2_instance_ids.include?(i)
+    a << instance
+  } unless options[:test_mode]
+  
+  if options[:configuration][:aws][:ec2][:instances].nil? || options[:configuration][:aws][:ec2][:instances].empty?
+    puts "\033[35mThe configuration set has no valid instances, so it cannot continue.\033[37m"
+    puts "\033[35mCheck the IDs that are being passed in and be sure they match AWS IDs.\033[37m"
+    exit 1
+  end
 end
 
 p options
+exit 
 
 # Start by building the instance once again
 # options[:configuration][:aws][:ec2][:instances].inject(Thread.new {}) do |t, instance|
