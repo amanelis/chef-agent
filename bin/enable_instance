@@ -138,12 +138,12 @@ OptionParser.new do |parser|
       puts "You passed in invalid argument for switch: -b | --buildurl, please try again."
       exit 1
     else
-      if setting =~ /^https:\/\/s3.amazonaws.com\//
+      if setting =~ /^https:\/\/s3.amazonaws.com\/com.signifyd.(.*)\/platform-builds\/(\d){1,15}(\/)?$/
         full_build_url = setting.strip.dup
         
         bucket_path   = full_build_url.gsub(/^https:\/\/s3.amazonaws.com\//, '').gsub(/\/(.*)/, '')                         # "com.signifyd.prod"
         environment   = full_build_url.gsub(/^https:\/\/s3.amazonaws.com\/com.signifyd\./, '').gsub(/\/(.*)$/, '')          # "prod"
-        build_number  = full_build_url.gsub(/https:\/\/s3.amazonaws.com\/(.*)\/platform-builds\//, '').gsub('/', '').strip  # "149"
+        build_number  = full_build_url.gsub(/^https:\/\/s3.amazonaws.com\/(.*)\/platform-builds\//, '').gsub('/', '').strip  # "149"
         
         options[:configuration][:aws][:s3][:bucket]       = bucket_path
         options[:configuration][:aws][:s3][:build_number] = build_number
@@ -157,7 +157,8 @@ OptionParser.new do |parser|
           options[:env] = :staging
         end
       else
-        puts "Must be a valid S3 url for switch: -b | --buildurl, please try again."
+        puts "Must be a valid S3 url for switch: -b | --buildurl, please try again. Follow the format below"
+        puts "  "
         exit 1
       end
     end
