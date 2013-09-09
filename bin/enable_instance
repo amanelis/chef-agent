@@ -58,16 +58,27 @@ require 'yaml'
 require 'aws-sdk'
 require 'net/ssh'
 
+# Options hash will contain all preset data for doing a valid deploy. Reference here for
+# environment variables and any variable used throughout the provision/deployment.
 options = {}
+
+# Well always assume 'test' env unless specified otherwise
 options[:env] = :test
+
+# If you want to supress/sync STDOUT
 options[:stdout] = true
+
+# Test mode will turn off real AWS interaction on certain work that needs to be done.
 options[:test_mode] = false
+
+# Main configuration for the nodes is specified here. 
 options[:configuration] = {
   :aws => {
     :credentials_file => '/private/signifyd/aws/aws-credentials.yml',
     :elb => nil,
     :ec2 => {
-      :instances => []
+      :instances => [],
+      :deploy_directory => '/opt/play/releases'
     },
     :s3 => {
       :bucket => nil,
@@ -78,7 +89,8 @@ options[:configuration] = {
   }
 }
 
-# First check and see if keys exist
+# First check and see if keys exist to make a valid AWS connection. It will exit here
+# if no keys are found and/or if authentication fails.
 if File.exists?(options[:configuration][:aws][:credentials_file]) 
   credentials = YAML::load(File.open(options[:configuration][:aws][:credentials_file], 'r'))
   
@@ -99,11 +111,13 @@ else
   exit 1
 end
 
+# Capture STDIN here and parse out if STDIN contains node information. This block of code 
+# is important, if we decided to pipe( | ) data into this script, we will need to configure
+# and store it from here.
 unless $stdin.tty?
   $stdin.each_line do |line|
-    if line.strip =~ /^i-([a-zA-Z0-9]{8})$/ 
-      options[:configuration][:aws][:ec2][:instances] << line.strip
-    end
+    # Save any STDIN input that contains or looks like an AWS instance ID => i-12345678
+    options[:configuration][:aws][:ec2][:instances] << line.strip if line.strip =~ /^i-([a-zA-Z0-9]{8})$/ 
   end
 end
 
@@ -121,7 +135,7 @@ OptionParser.new do |parser|
   parser.separator ""
   parser.separator "Specific options:"
   
-  parser.on("-i", "--instances ARRAY", Array, "\033[32mRequired\033[37m. Pass a comma seperated list of EC2 instance ids that will be booted with build.") do |setting|
+  parser.on("-i", "--instances ARRAY", Array, "\033[32mRequired\033[37m. Pass a comma seperated list of EC2 instance ids that will be booted with build. \033[31mDO NOT PUT SPACES BETWEEN IDS AND COMMAS\033[37m") do |setting|
     if setting.empty?
       puts "You passed an invalid list of AWS instances, please try again."
       exit 1
@@ -141,9 +155,9 @@ OptionParser.new do |parser|
       if setting =~ /^https:\/\/s3.amazonaws.com\/com.signifyd.(.*)\/platform-builds\/(\d){1,15}(\/)?$/
         full_build_url = setting.strip.dup
         
-        bucket_path   = full_build_url.gsub(/^https:\/\/s3.amazonaws.com\//, '').gsub(/\/(.*)/, '')                         # "com.signifyd.prod"
-        environment   = full_build_url.gsub(/^https:\/\/s3.amazonaws.com\/com.signifyd\./, '').gsub(/\/(.*)$/, '')          # "prod"
-        build_number  = full_build_url.gsub(/^https:\/\/s3.amazonaws.com\/(.*)\/platform-builds\//, '').gsub('/', '').strip  # "149"
+        bucket_path   = full_build_url.gsub(/^https:\/\/s3.amazonaws.com\//, '').gsub(/\/(.*)/, '')                           # "com.signifyd.prod"
+        environment   = full_build_url.gsub(/^https:\/\/s3.amazonaws.com\/com.signifyd\./, '').gsub(/\/(.*)$/, '')            # "prod"
+        build_number  = full_build_url.gsub(/^https:\/\/s3.amazonaws.com\/(.*)\/platform-builds\//, '').gsub('/', '').strip   # "149"
         
         options[:configuration][:aws][:s3][:bucket]       = bucket_path
         options[:configuration][:aws][:s3][:build_number] = build_number
@@ -182,7 +196,7 @@ OptionParser.new do |parser|
     options[:stdout] = setting
   end
   
-  parser.on("--test", "Enable test environment and don't do any instance work") do |setting|
+  parser.on("-t", "--test", "\033[35mOptional\033[37m. Enable test environment and don't do any instance work.") do |setting|
     options[:test_mode] = true
   end
 
@@ -217,8 +231,9 @@ else
   } unless options[:test_mode]
   
   if options[:configuration][:aws][:ec2][:instances].nil? || options[:configuration][:aws][:ec2][:instances].empty?
-    puts "\033[35mThe configuration set has no valid instances, so it cannot continue.\033[37m"
-    puts "\033[35mCheck the IDs that are being passed in and be sure they match AWS IDs.\033[37m"
+    puts "\033[35mThe configuration set has no valid AWS instances, so it cannot continue.\033[37m"
+    puts "\033[35mCheck the AWS instance IDs that are being passed in via STDIN and be sure\033[37m"
+    puts "\033[35mthey match valid AWS IDs in account specified by AWS credential keys.\033[37m"
     exit 1
   end
 end
@@ -226,16 +241,17 @@ end
 p options
 exit 
 
-# Start by building the instance once again
-# options[:configuration][:aws][:ec2][:instances].inject(Thread.new {}) do |t, instance|
-#   p " => running Chef Platform[#{options[:env].to_s}] on #{instance.id} at #{instance.dns_name}..."
-#   Thread.new do
-#     Net::SSH.start(instance.dns_name, 'ec2-user') do |session|
-#       session.open_channel do |ch|
-#         ch.request_pty
-#         ch.exec "sudo sh -c \"cd /root; curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1.sh | bash -s #{options[:env].to_s}\""
-#       end 
-#     end
-#     t.join
-#   end
-# end.join
+# In this section, we will break off workers to handle each instance. Their first job is to ssh into the machine
+# and configure the build
+options[:configuration][:aws][:ec2][:instances].inject(Thread.new {}) do |t, instance|
+  p " => running Chef Platform[#{options[:env].to_s}] on #{instance.id} at #{instance.dns_name}..."
+  Thread.new do
+    Net::SSH.start(instance.dns_name, 'ec2-user') do |session|
+      session.open_channel do |ch|
+        ch.request_pty
+        ch.exec "sudo sh -c \"cd /root; curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1.sh | bash -s #{options[:env].to_s}\""
+      end 
+    end
+    t.join
+  end
+end.join
