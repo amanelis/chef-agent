@@ -305,6 +305,9 @@ instructions = [
 p instructions
 exit
 
+# Tagging
+# EC2.tags.create(instance, 'stage', :value => 'production')
+
 # In this section, we will break off workers to handle each instance. Their first job is to ssh into the machine
 # and configure the build
 options[:configuration][:aws][:ec2][:instances].inject(Thread.new {}) do |t, instance|

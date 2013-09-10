@@ -122,8 +122,6 @@ options[:configuration][:aws][:ec2][:instance_count].times.collect { |ndx|
 
 # Sleep and wait for currently booting images to be ready
 sleep 2 while instances.any? { |i| i.status == :pending if i.respond_to?(:status) }
-
-puts "Waiting for instance(s) to respond to ssh, sleeping for #{options[:configuration][:aws][:ec2][:default_sleep_second]/60} minutes..."
 sleep options[:configuration][:aws][:ec2][:default_sleep_second]
 
 instances.inject(Thread.new {}) do |t, instance|
