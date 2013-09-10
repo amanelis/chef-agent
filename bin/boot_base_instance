@@ -112,33 +112,35 @@ $stdout.sync = options[:stdout]
 EC2 = AWS::EC2.new
 S3  = AWS::S3.new
 
-# Save all instances created
-instances = []
+# # Save all instances created
+# instances = []
+# 
+# # Iterate for x times to create number of instances
+# options[:configuration][:aws][:ec2][:instance_count].times.collect { |ndx| 
+#   instances << EC2.instances.create(options[:configuration][:aws][:ec2][:instance])
+# }
+# 
+# # Sleep and wait for currently booting images to be ready
+# sleep 2 while instances.any? { |i| i.status == :pending if i.respond_to?(:status) }
+# 
+# puts "Waiting for instance(s) to respond to ssh, sleeping for #{options[:configuration][:aws][:ec2][:default_sleep_second]/60} minutes..."
+# sleep options[:configuration][:aws][:ec2][:default_sleep_second]
+# 
+# instances.inject(Thread.new {}) do |t, instance|
+#   Thread.new do
+#     Net::SSH.start(instance.dns_name, 'ec2-user') do |session|
+#       session.open_channel do |ch|
+#         ch.request_pty
+#         ch.exec 'sudo sh -c "cd /root; curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1.sh | bash -s base"'
+#       end 
+#     end
+#     t.join
+#   end
+# end.join
+# 
+# puts instances.collect { |i| i.id }
 
-# Iterate for x times to create number of instances
-options[:configuration][:aws][:ec2][:instance_count].times.collect { |ndx| 
-  instances << EC2.instances.create(options[:configuration][:aws][:ec2][:instance])
-}
-
-# Sleep and wait for currently booting images to be ready
-sleep 2 while instances.any? { |i| i.status == :pending if i.respond_to?(:status) }
-
-puts "Waiting for instance(s) to respond to ssh, sleeping for #{options[:configuration][:aws][:ec2][:default_sleep_second]/60} minutes..."
-sleep options[:configuration][:aws][:ec2][:default_sleep_second]
-
-instances.inject(Thread.new {}) do |t, instance|
-  Thread.new do
-    Net::SSH.start(instance.dns_name, 'ec2-user') do |session|
-      session.open_channel do |ch|
-        ch.request_pty
-        ch.exec 'sudo sh -c "cd /root; curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1.sh | bash -s base"'
-      end 
-    end
-    t.join
-  end
-end.join
-
-puts instances.collect { |i| i.id }
+puts "i-1200517a"
 
 # puts options[:configuration][:aws][:ec2][:instance_count].times.collect { |ndx|
 #   "i-#{(12345678 + rand(81))}"

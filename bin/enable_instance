@@ -35,15 +35,14 @@
 #   Given command (boot_base_instance) will enable 2 instances with their build
 #   $ bin/enable_instance -l aws.staging -b build_url -i i-2408hg,i-f02fhf
 #
-#
-# load_balancers don't put instances into loadbalancer unless play is running
 
+# Start by checking that there is always the two rubygem dependencies installed.
 begin 
   orig_stdout = $stdout.dup
   $stdout.reopen('/dev/null', 'w')
 
-  system 'gem install aws-sdk --no-ri --no-rdoc' unless system('gem list | grep aws-sdk')
-  system 'gem install net-ssh --no-ri --no-rdoc' unless system('gem list | grep net-ssh')
+  system('gem install aws-sdk --no-ri --no-rdoc') unless system('gem list | grep aws-sdk')
+  system('gem install net-ssh --no-ri --no-rdoc') unless system('gem list | grep net-ssh')
 ensure
   $stdout.reopen(orig_stdout)
 end
@@ -77,15 +76,19 @@ options[:configuration] = {
     :credentials_file => '/private/signifyd/aws/aws-credentials.yml',
     :elb => nil,
     :ec2 => {
-      :instances => [],
-      :deploy_directory => '/opt/play/releases'
+      :instances => []
     },
     :s3 => {
-      :bucket => nil,
+      :bucket       => nil,
       :build_number => nil,
-      :build_path => nil,
-      :build_url => nil
+      :build_path   => nil,
+      :build_url    => nil
     }
+  },
+  :play => {
+    :build_hash       => {},
+    :build_directory  => nil,
+    :deploy_directory => '/opt/play/releases'
   }
 }
 
@@ -140,9 +143,9 @@ OptionParser.new do |parser|
       puts "You passed an invalid list of AWS instances, please try again."
       exit 1
     else
-      setting.collect { |instance| 
-        next if options[:configuration][:aws][:ec2][:instances].include?(instance)
-        options[:configuration][:aws][:ec2][:instances] << instance
+      setting.collect { |instance_id| 
+        next if options[:configuration][:aws][:ec2][:instances].include?(instance_id)
+        options[:configuration][:aws][:ec2][:instances] << instance_id
       }
     end
   end
@@ -155,15 +158,61 @@ OptionParser.new do |parser|
       if setting =~ /^https:\/\/s3.amazonaws.com\/com.signifyd.(.*)\/platform-builds\/(\d){1,15}(\/)?$/
         full_build_url = setting.strip.dup
         
-        bucket_path   = full_build_url.gsub(/^https:\/\/s3.amazonaws.com\//, '').gsub(/\/(.*)/, '')                           # "com.signifyd.prod"
-        environment   = full_build_url.gsub(/^https:\/\/s3.amazonaws.com\/com.signifyd\./, '').gsub(/\/(.*)$/, '')            # "prod"
+        bucket_path   = full_build_url.gsub(/^https:\/\/s3.amazonaws.com\//, '').gsub(/\/(.*)/, '').strip                     # "com.signifyd.prod"
+        environment   = full_build_url.gsub(/^https:\/\/s3.amazonaws.com\/com.signifyd\./, '').gsub(/\/(.*)$/, '').strip      # "prod"
         build_number  = full_build_url.gsub(/^https:\/\/s3.amazonaws.com\/(.*)\/platform-builds\//, '').gsub('/', '').strip   # "149"
         
         options[:configuration][:aws][:s3][:bucket]       = bucket_path
         options[:configuration][:aws][:s3][:build_number] = build_number
         options[:configuration][:aws][:s3][:build_url]    = full_build_url
-        options[:configuration][:aws][:s3][:build_path]   = "platform-builds/#{build_number}/signifydplatform-1.0-SNAPSHOT.zip"
+        options[:configuration][:aws][:s3][:build_path]   = "platform-builds/#{build_number}"
         
+        # Ful directory where the current build will be stored
+        options[:configuration][:play][:build_directory]  = "#{options[:configuration][:play][:deploy_directory]}/build-#{options[:configuration][:aws][:s3][:build_number]}" 
+                
+        # Build temp urls for all objects
+        platform_build_url    = AS3.buckets[bucket_path].objects["#{options[:configuration][:aws][:s3][:build_path]}/signifydplatform-1.0-SNAPSHOT.zip"].url_for(
+          :read,
+          :expires_in => 10 * 60
+        )
+        platform_javaopts_url = AS3.buckets[bucket_path].objects["#{options[:configuration][:aws][:s3][:build_path]}/java_opts"].url_for(
+          :read,
+          :expires_in => 10 * 60
+        )
+        platform_newrelic_url = AS3.buckets[bucket_path].objects["#{options[:configuration][:aws][:s3][:build_path]}/newrelic.yml"].url_for(
+          :read,
+          :expires_in => 10 * 60
+        )
+        
+        # Build hash, will be used during ssh to configure the files and download them
+        options[:configuration][:play][:build_hash] = {
+          :build => {
+            :location   => "#{options[:configuration][:aws][:s3][:build_path]}/signifydplatform-1.0-SNAPSHOT.zip",
+            :name       => 'signifydplatform-1.0-SNAPSHOT.zip',
+            :url        => {
+              :location => platform_build_url.to_s.gsub(/\?(.*)$/, '').strip,
+              :params   => platform_build_url.to_s.gsub(/^(.*)\?/, '').strip
+            }
+          },
+          :javaopts => {
+            :location   => "#{options[:configuration][:aws][:s3][:build_path]}/java_opts",
+            :name       => 'java_opts',
+            :url        => {
+              :location => platform_javaopts_url.to_s.gsub(/\?(.*)$/, '').strip,
+              :params   => platform_javaopts_url.to_s.gsub(/^(.*)\?/, '').strip
+            }
+          },
+          :newrelic => {
+            :location   => "#{options[:configuration][:aws][:s3][:build_path]}/newrelic.yml",
+            :name       => "newrelic.yml",
+            :url        => {
+              :location => platform_newrelic_url.to_s.gsub(/\?(.*)$/, '').strip,
+              :params   => platform_newrelic_url.to_s.gsub(/^(.*)\?/, '').strip
+            }
+          }
+        }
+        
+        # Not really needed, but good to have the env of the current build just on hand
         case environment
         when "prod"
           options[:env] = :production
@@ -227,7 +276,7 @@ else
   ec2_instance_ids = ec2_instances.collect(&:id)
   options[:configuration][:aws][:ec2][:instances] = options[:configuration][:aws][:ec2][:instances].inject([]) { |a, i|
     next a unless ec2_instance_ids.include?(i)
-    a << instance
+    a << i
   } unless options[:test_mode]
   
   if options[:configuration][:aws][:ec2][:instances].nil? || options[:configuration][:aws][:ec2][:instances].empty?
@@ -238,20 +287,36 @@ else
   end
 end
 
-p options
-exit 
+# Build instructions to be run on the server, this is very important.
+instructions = [
+  "/bin/rm -rf #{options[:configuration][:play][:build_directory]}/",
+  "/bin/mkdir #{options[:configuration][:play][:build_directory]}/",
+  "/bin/touch #{options[:configuration][:play][:build_directory]}/play.log",
+  "/usr/bin/curl -G -d '#{options[:configuration][:play][:build_hash][:build][:url][:params]}' #{options[:configuration][:play][:build_hash][:build][:url][:location]} -o #{options[:configuration][:play][:build_directory]}/#{options[:configuration][:play][:build_hash][:build][:name]}",
+  "/usr/bin/curl -G -d '#{options[:configuration][:play][:build_hash][:javaopts][:url][:params]}' #{options[:configuration][:play][:build_hash][:javaopts][:url][:location]} -o #{options[:configuration][:play][:build_directory]}/#{options[:configuration][:play][:build_hash][:javaopts][:name]}",
+  "/usr/bin/curl -G -d '#{options[:configuration][:play][:build_hash][:newrelic][:url][:params]}' #{options[:configuration][:play][:build_hash][:newrelic][:url][:location]} -o #{options[:configuration][:play][:build_directory]}/#{options[:configuration][:play][:build_hash][:newrelic][:name]}",
+  "/usr/bin/unzip #{options[:configuration][:play][:build_directory]}/#{options[:configuration][:play][:build_hash][:build][:name]} -d #{options[:configuration][:play][:build_directory]}/",
+  "/bin/rm -rf #{options[:configuration][:play][:build_directory]}/*.zip",
+  "/bin/ln -nsf #{options[:configuration][:play][:build_directory]}/ /opt/play/current",
+  "/usr/bin/sudo stop platform",
+  "/usr/bin/sudo start platform EMAIL_ALERT_FREQUENCY=0"
+]
+
+p instructions
+exit
 
 # In this section, we will break off workers to handle each instance. Their first job is to ssh into the machine
 # and configure the build
 options[:configuration][:aws][:ec2][:instances].inject(Thread.new {}) do |t, instance|
   p " => running Chef Platform[#{options[:env].to_s}] on #{instance.id} at #{instance.dns_name}..."
   Thread.new do
-    Net::SSH.start(instance.dns_name, 'ec2-user') do |session|
-      session.open_channel do |ch|
-        ch.request_pty
-        ch.exec "sudo sh -c \"cd /root; curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1.sh | bash -s #{options[:env].to_s}\""
-      end 
+    Net::SSH.start(instance.dns_name, 'play') do |session|
+      instructions.each do |instruction|
+        session.exec instruction
+        session.loop
+      end
     end
+    
     t.join
   end
 end.join
