@@ -307,7 +307,9 @@ options[:configuration][:aws][:ec2][:instances].inject(Thread.new {}) do |t, ins
   Thread.new do
     Net::SSH.start(instance.dns_name, 'play') do |session|
       instructions.each do |instruction|
-        session.exec instruction
+        session.exec instruction do |ch, stream, data|
+          puts "SSH[ERROR]: #{data}" if stream == :stderr
+        end
         session.loop
       end
     end
