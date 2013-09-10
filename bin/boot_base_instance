@@ -137,7 +137,6 @@ instances.inject(Thread.new {}) do |t, instance|
 end.join
 
 puts instances.collect { |i| i.id }
-
 # puts options[:configuration][:aws][:ec2][:instance_count].times.collect { |ndx|
 #   "i-#{(12345678 + rand(81))}"
 # }

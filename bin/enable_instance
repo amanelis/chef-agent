@@ -276,7 +276,7 @@ else
   ec2_instance_ids = ec2_instances.collect(&:id)
   options[:configuration][:aws][:ec2][:instances] = options[:configuration][:aws][:ec2][:instances].inject([]) { |a, i|
     next a unless ec2_instance_ids.include?(i)
-    a << i
+    a << EC2.instances[i]
   } unless options[:test_mode]
   
   if options[:configuration][:aws][:ec2][:instances].nil? || options[:configuration][:aws][:ec2][:instances].empty?
@@ -302,16 +302,8 @@ instructions = [
   "/usr/bin/sudo start platform EMAIL_ALERT_FREQUENCY=0"
 ]
 
-p instructions
-exit
-
-# Tagging
-# EC2.tags.create(instance, 'stage', :value => 'production')
-
-# In this section, we will break off workers to handle each instance. Their first job is to ssh into the machine
-# and configure the build
+# Break out Threads to work on each instance, ssh and configure using the instructions []
 options[:configuration][:aws][:ec2][:instances].inject(Thread.new {}) do |t, instance|
-  p " => running Chef Platform[#{options[:env].to_s}] on #{instance.id} at #{instance.dns_name}..."
   Thread.new do
     Net::SSH.start(instance.dns_name, 'play') do |session|
       instructions.each do |instruction|
@@ -319,7 +311,6 @@ options[:configuration][:aws][:ec2][:instances].inject(Thread.new {}) do |t, ins
         session.loop
       end
     end
-    
     t.join
   end
 end.join
