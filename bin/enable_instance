@@ -73,8 +73,8 @@ options[:test_mode] = false
 
 # Keep track of application timing
 options[:time] = {
-  main_s  => nil,
-  main_e  => nil
+  :main_s  => nil,
+  :main_e  => nil
 }
 
 # Main configuration for the nodes is specified here. 
@@ -318,9 +318,7 @@ options[:configuration][:aws][:ec2][:instances].inject(Thread.new {}) do |t, ins
     puts "Starting ssh, running instructions and booting application #{options[:configuration][:aws][:s3][:build_number]} on #{instance.dns_name}"
     Net::SSH.start(instance.dns_name, 'play') do |session|
       instructions.each do |instruction|
-        session.exec instruction do |ch, stream, data|
-          puts "SSH[ERROR]: #{data}" if stream == :stderr
-        end
+        session.exec instruction
         session.loop
       end
     end
@@ -347,5 +345,5 @@ options[:configuration][:aws][:ec2][:instances].inject(Thread.new {}) do |t, ins
 end.join
 
 # Any last computation, handle here
-options[:time][:main_e] = ((Time.now - s_time) / 60 ).round(2)
+options[:time][:main_e] = ((Time.now - options[:time][:main_s]) / 60 ).round(2)
 puts "Completed in #{options[:time][:main_e]} second(s)."
