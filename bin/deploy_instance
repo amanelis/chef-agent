@@ -337,6 +337,9 @@ instructions = [
 puts "Running Build on all instances created..."
 options[:time][:build][:start] = Time.now
 options[:configuration][:aws][:ec2][:instances].in_parallel{ |instance| 
+  # Tag the instances to the current env
+  instance.add_tag('Name', :value => "platform-#{options[:env].to_s}-xx")
+  
   puts "SSH into #{instance.dns_name} from Thread[#{Thread.current.object_id}]"
   Net::SSH.start(instance.dns_name, 'play') do |session|
     puts " => running Instructions on #{instance.id} from Thread[#{Thread.current.object_id}]"
