@@ -47,10 +47,17 @@ begin
   orig_stdout = $stdout.dup
   $stdout.reopen('/dev/null', 'w')
 
-  system('gem install aws-sdk --no-ri --no-rdoc') unless system('gem list | grep aws-sdk')
-  system('gem install net-ssh --no-ri --no-rdoc') unless system('gem list | grep net-ssh')
+  system('gem install aws-sdk --no-ri --no-rdoc')       unless system('gem list | grep aws-sdk')
+  system('gem install net-ssh --no-ri --no-rdoc')       unless system('gem list | grep net-ssh')
+  system 'gem install net-ssh-multi --no-ri --no-rdoc'  unless system('gem list | grep net-ssh-multi')
 ensure
   $stdout.reopen(orig_stdout)
+end
+
+module Enumerable
+  def in_parallel
+    map{ |x| Thread.new { yield(x) } }.each{ |t| t.join }
+  end
 end
 
 # Require Ruby standard libs first.
@@ -62,6 +69,7 @@ require 'yaml'
 # Require all third party packages.
 require 'aws-sdk'
 require 'net/ssh'
+require 'net/ssh/multi'
 
 # Options hash will contain all preset data for doing a valid deploy. Reference here for
 # environment variables and any variable used throughout the provision/deployment.
