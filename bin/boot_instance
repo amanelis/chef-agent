@@ -156,9 +156,9 @@ sleep options[:configuration][:aws][:ec2][:default_sleep_second]
 puts "Running Chef on all instances created..."
 options[:time][:chef][:start] = Time.now
 instances.in_parallel{ |instance| 
-  puts "SSH into #{instance.dns_name}"
+  puts "SSH into #{instance.dns_name} from Thread[#{Thread.current.object_id}]"
   Net::SSH.start(instance.dns_name, 'ec2-user') do |session|
-    puts " => running Chef on #{instance.id}"
+    puts " => running Chef on #{instance.id} from Thread[#{Thread.current.object_id}]"
     session.open_channel do |ch|
       ch.request_pty
       ch.exec 'sudo sh -c "cd /root; curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1.sh | bash -s base"'
