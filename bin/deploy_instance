@@ -42,6 +42,14 @@
 # 1 Deploy job - number of nodes (replace exiting ones, count in load balancer passed in), make loadbalancer required, need to know to get nodes
 #   build_url. 
 
+# Class patching
+# Enumerable#in_parallel: allows you to parallelize work on collections.
+module Enumerable
+  def in_parallel
+    map{ |x| Thread.new { yield(x) } }.each{ |t| t.join }
+  end
+end
+
 # Start by checking that there is always the two rubygem dependencies installed.
 begin 
   orig_stdout = $stdout.dup
@@ -52,12 +60,6 @@ begin
   system 'gem install net-ssh-multi --no-ri --no-rdoc'  unless system('gem list | grep net-ssh-multi')
 ensure
   $stdout.reopen(orig_stdout)
-end
-
-module Enumerable
-  def in_parallel
-    map{ |x| Thread.new { yield(x) } }.each{ |t| t.join }
-  end
 end
 
 # Require Ruby standard libs first.
