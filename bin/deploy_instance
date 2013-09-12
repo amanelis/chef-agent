@@ -2,6 +2,7 @@
 
 # Author: Alex Manelis <manelis@signifyd.com>
 # Synopsis: This script is ment to do one thing. Take a list of AWS EC2 instance
+# prepare and install the build that is passed in by -b onto the instace
 # ids and add them to a given load balancer. Baiscally it can be done 2 ways. 
 # 
 # To start, there are two required switches that must be passed.
@@ -27,15 +28,19 @@
 # 
 # Examples:
 # Running via the first option number #1
-#   Given command (boot_base_instance) will create 2 instances and then pipe the 
+#   Given command (boot_instance) will create 2 instances and then pipe the 
 #   EC2 instance IDs into
 #   
-#   $ bin/boot_base_instance -n 2 | bin/enable_instance -l aws.staging -b build_url
+#   $ bin/boot_instance -n 2 | bin/deploy_instance -l aws.staging -b build_url
 # 
-#   Given command (boot_base_instance) will enable 2 instances with their build
-#   $ bin/enable_instance -l aws.staging -b build_url -i i-2408hg,i-f02fhf
+#   Given command (boot_instance) will enable 2 instances with their build
+#   $ bin/deploy_instance -l aws.staging -b build_url -i i-2408hg,i-f02fhf
 #
-# bin/boot_base_instance | bin/enable_instance -l platform-test-branch -b https://s3.amazonaws.com/com.signifyd.test/platform-builds/45/
+# bin/boot_instance | bin/deploy_instance -l platform-test-branch -b https://s3.amazonaws.com/com.signifyd.test/platform-builds/45/
+#
+# Create script that you give -l loadbalancer -i instance_ids, it replaces existing instances with instanes you gave it
+# 1 Deploy job - number of nodes (replace exiting ones, count in load balancer passed in), make loadbalancer required, need to know to get nodes
+#   build_url. 
 
 # Start by checking that there is always the two rubygem dependencies installed.
 begin 
@@ -141,7 +146,7 @@ load_balancers = ELB.load_balancers
 ec2_instances  = EC2.instances
 
 OptionParser.new do |parser|
-  parser.banner = "USAGE: boot_base_instance [options]"
+  parser.banner = "USAGE: boot_instance [options]"
   parser.separator ""
   parser.separator "Specific options:"
   
@@ -337,7 +342,7 @@ options[:configuration][:aws][:ec2][:instances].inject(Thread.new {}) do |t, ins
         end
       end
       
-      puts "Adding node to #{instance.dns_name} to #{options[:configuration][:aws][:elb].name}..."
+      puts "Adding node #{instance.dns_name} to #{options[:configuration][:aws][:elb].name}..."
       options[:configuration][:aws][:elb].instances.register(instance)
     end
     t.join
@@ -346,4 +351,3 @@ end.join
 
 # Any last computation, handle here
 options[:time][:main_e] = ((Time.now - options[:time][:main_s]) / 60 ).round(2)
-puts "Completed in #{options[:time][:main_e]} second(s)."
