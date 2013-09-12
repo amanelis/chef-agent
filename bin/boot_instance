@@ -64,6 +64,17 @@ options[:configuration] = {
   }
 }
 
+options[:time] = {
+  :main => {
+    :start => nil,
+    :finish => nil
+  },
+  :chef => {
+    :start => nil,
+    :finish => nil
+  }
+}
+
 # First check and see if keys exist
 if File.exists?(options[:configuration][:aws][:credentials_file]) 
   credentials = YAML::load(File.open(options[:configuration][:aws][:credentials_file], 'r'))
@@ -116,6 +127,9 @@ end.parse!(ARGV)
 # Sync standard out
 $stdout.sync = options[:stdout]
 
+# Start timeer
+options[:time][:main][:start] = Time.now
+
 # Create a few instances to communicate with AWS
 EC2 = AWS::EC2.new
 S3  = AWS::S3.new
@@ -137,6 +151,7 @@ sleep options[:configuration][:aws][:ec2][:default_sleep_second]
 
 # Run through instances and start SSH
 puts "Running Chef on all instances created..."
+options[:time][:chef][:start] = Time.now
 instances.in_parallel{ |instance| 
   puts "SSH into #{instance.dns_name}"
   Net::SSH.start(instance.dns_name, 'ec2-user') do |session|
@@ -147,5 +162,9 @@ instances.in_parallel{ |instance|
     end 
   end
 }
+options[:time][:chef][:finish] = ((Time.now - options[:time][:chef][:start]) / 60)
+options[:time][:main][:finish] = ((Time.now - options[:time][:main][:start]) / 60)
 
+puts "Completed[Chef] in #{options[:time][:chef][:finish]} minutes."
+puts "Completed[Main] in #{options[:time][:main][:finish]} minutes."
 puts instances.collect { |i| i.id }
