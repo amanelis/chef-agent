@@ -48,9 +48,17 @@ require 'aws-sdk'
 require 'net/ssh'
 require 'net/ssh/multi'
 
+# Options hash will contain all preset data for doing a valid deploy. Reference here for
+# environment variables and any variable used throughout the provision/deployment.
 options = {}
+
+# If you want to supress/sync STDOUT
 options[:stdout] = true
+
+# Test mode will turn off real AWS interaction on certain work that needs to be done.
 options[:test_mode] = false
+
+# Main configuration for the nodes is specified here. 
 options[:configuration] = {
   :aws => {
     :credentials_file => '/private/signifyd/aws/aws-credentials.yml',
@@ -67,6 +75,7 @@ options[:configuration] = {
   }
 }
 
+# Keep track of timing
 options[:time] = {
   :main => {
     :start => nil,
@@ -165,8 +174,8 @@ instances.in_parallel{ |instance|
     end 
   end
 }
-options[:time][:chef][:finish] = ((Time.now - options[:time][:chef][:start]) / 60)
-options[:time][:main][:finish] = ((Time.now - options[:time][:main][:start]) / 60)
+options[:time][:chef][:finish] = ((Time.now - options[:time][:chef][:start]) / 60).round(2)
+options[:time][:main][:finish] = ((Time.now - options[:time][:main][:start]) / 60).round(2)
 
 puts "Completed[Chef] in #{options[:time][:chef][:finish]} minutes."
 puts "Completed[Main] in #{options[:time][:main][:finish]} minutes."

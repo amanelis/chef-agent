@@ -86,12 +86,6 @@ options[:stdout] = true
 # Test mode will turn off real AWS interaction on certain work that needs to be done.
 options[:test_mode] = false
 
-# Keep track of application timing
-options[:time] = {
-  :main_s  => nil,
-  :main_e  => nil
-}
-
 # Main configuration for the nodes is specified here. 
 options[:configuration] = {
   :aws => {
@@ -111,6 +105,18 @@ options[:configuration] = {
     :build_hash       => {},
     :build_directory  => nil,
     :deploy_directory => '/opt/play/releases'
+  }
+}
+
+# Keep track of timing
+options[:time] = {
+  :main => {
+    :start => nil,
+    :finish => nil
+  },
+  :build => {
+    :start => nil,
+    :finish => nil
   }
 }
 
@@ -280,8 +286,8 @@ end.parse!(ARGV)
 # Sync standard out
 $stdout.sync = options[:stdout]
 
-# Start timer here
-options[:time][:main_s] = Time.now
+# Start timeer
+options[:time][:main][:start] = Time.now
 
 # Check for a valid build number that should have been passed to the script
 if options[:configuration][:aws][:s3][:bucket].nil? || options[:configuration][:aws][:s3][:build_number].nil? || 
@@ -328,36 +334,39 @@ instructions = [
 ]
 
 # Break out Threads to work on each instance, ssh and configure using the instructions []
-options[:configuration][:aws][:ec2][:instances].inject(Thread.new {}) do |t, instance|
-  Thread.new do
-    puts "Starting ssh, running instructions and booting application #{options[:configuration][:aws][:s3][:build_number]} on #{instance.dns_name}"
-    Net::SSH.start(instance.dns_name, 'play') do |session|
-      instructions.each do |instruction|
-        session.exec instruction
-        session.loop
+puts "Running Build on all instances created..."
+options[:time][:build][:start] = Time.now
+options[:configuration][:aws][:ec2][:instances].in_parallel{ |instance| 
+  puts "SSH into #{instance.dns_name} from Thread[#{Thread.current.object_id}]"
+  Net::SSH.start(instance.dns_name, 'play') do |session|
+    puts " => running Instructions on #{instance.id} from Thread[#{Thread.current.object_id}]"
+    instructions.each do |instruction|
+      session.exec instruction
+      session.loop
+    end
+  end
+  
+  # Sleep and wait for node to start if there is a balid load balancer passed
+  if options[:configuration][:aws][:elb]
+    puts "Waiting for play to start, querying application every 2 seconds from Thread[#{Thread.current.object_id}]"
+    while true
+      sleep 2
+      print '.'
+      response = `curl -Is http://#{instance.dns_name} | grep -c 303`.strip
+      
+      if response == 1 || response == "1"
+        puts ""
+        break
       end
     end
     
-    # Sleep and wait for node to start if there is a balid load balancer passed
-    if options[:configuration][:aws][:elb]
-      puts "Waiting for play to start, querying application every 2 seconds..."
-      while true
-        sleep 2
-        print '.'
-        response = `curl -Is http://#{instance.dns_name} | grep -c 303`.strip
-        
-        if response == 1 || response == "1"
-          puts ""
-          break
-        end
-      end
-      
-      puts "Adding node #{instance.dns_name} to #{options[:configuration][:aws][:elb].name}..."
-      options[:configuration][:aws][:elb].instances.register(instance)
-    end
-    t.join
+    puts "Adding node #{instance.dns_name} to #{options[:configuration][:aws][:elb].name} from Thread[#{Thread.current.object_id}]"
+    options[:configuration][:aws][:elb].instances.register(instance)
   end
-end.join
+}
 
-# Any last computation, handle here
-options[:time][:main_e] = ((Time.now - options[:time][:main_s]) / 60 ).round(2)
+options[:time][:build][:finish] = ((Time.now - options[:time][:build][:start]) / 60).round(2)
+options[:time][:main][:finish]  = ((Time.now - options[:time][:main][:start]) / 60).round(2)
+
+puts "Completed[Build] in #{options[:time][:build][:finish]} minutes."
+puts "Completed[Main] in #{options[:time][:main][:finish]} minutes."
