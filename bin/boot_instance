@@ -124,6 +124,7 @@ S3  = AWS::S3.new
 instances = []
 
 # Iterate for x times to create number of instances
+puts "Booting #{options[:configuration][:aws][:ec2][:instance_count]} AWS instance(s)..."
 options[:configuration][:aws][:ec2][:instance_count].times.collect { |ndx| 
   instance = EC2.instances.create(options[:configuration][:aws][:ec2][:instance])
   instances << instance
@@ -131,11 +132,15 @@ options[:configuration][:aws][:ec2][:instance_count].times.collect { |ndx|
 
 # Sleep and wait for currently booting images to be ready
 sleep 2 while instances.any? { |i| i.status == :pending if i.respond_to?(:status) }
+puts "Sleeping #{options[:configuration][:aws][:ec2][:default_sleep_second]/60} minutes to wait for instance to fully boot and respond to ssh..."
 sleep options[:configuration][:aws][:ec2][:default_sleep_second]
 
 # Run through instances and start SSH
+puts "Running Chef on all instances created..."
 instances.in_parallel{ |instance| 
+  puts "SSH into #{instance.dns_name}"
   Net::SSH.start(instance.dns_name, 'ec2-user') do |session|
+    puts " => running Chef on #{instance.id}"
     session.open_channel do |ch|
       ch.request_pty
       ch.exec 'sudo sh -c "cd /root; curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1.sh | bash -s base"'
