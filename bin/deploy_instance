@@ -37,10 +37,6 @@
 #   $ bin/deploy_instance -l aws.staging -b build_url -i i-2408hg,i-f02fhf
 #
 # bin/boot_instance | bin/deploy_instance -l platform-test-branch -b https://s3.amazonaws.com/com.signifyd.test/platform-builds/45/
-#
-# Create script that you give -l loadbalancer -i instance_ids, it replaces existing instances with instanes you gave it
-# 1 Deploy job - number of nodes (replace exiting ones, count in load balancer passed in), make loadbalancer required, need to know to get nodes
-#   build_url. 
 
 # Class patching
 # Enumerable#in_parallel: allows you to parallelize work on collections.
@@ -89,6 +85,8 @@ options[:test_mode] = false
 # Main configuration for the nodes is specified here. 
 options[:configuration] = {
   :aws => {
+    :access_key_id => nil,
+    :secret_access_key => nil,
     :credentials_file => '/private/signifyd/aws/aws-credentials.yml',
     :elb => nil,
     :ec2 => {
@@ -318,6 +316,11 @@ else
   end
 end
 
+
+p 
+system("./bin/swap_instance -l #{options[:configuration][:aws][:elb].name} -i #{options[:configuration][:aws][:ec2][:instances].join(',')} --test")
+exit
+
 # Build instructions to be run on the server, this is very important.
 instructions = [
   "/bin/rm -rf #{options[:configuration][:play][:build_directory]}/",
@@ -340,6 +343,7 @@ options[:configuration][:aws][:ec2][:instances].in_parallel{ |instance|
   # Tag the instances to the current env
   instance.add_tag('Name', :value => "platform-#{options[:env].to_s}-xx")
   
+  # Do the work via SSH
   puts "SSH into #{instance.dns_name} from Thread[#{Thread.current.object_id}]"
   Net::SSH.start(instance.dns_name, 'play') do |session|
     puts " => running Instructions on #{instance.id} from Thread[#{Thread.current.object_id}]"
@@ -349,27 +353,36 @@ options[:configuration][:aws][:ec2][:instances].in_parallel{ |instance|
     end
   end
   
-  # Sleep and wait for node to start if there is a balid load balancer passed
-  if options[:configuration][:aws][:elb]
-    puts "Waiting for play to start, querying application every 2 seconds from Thread[#{Thread.current.object_id}]"
-    while true
-      sleep 2
-      print '.'
-      response = `curl -Is http://#{instance.dns_name} | grep -c 303`.strip
-      
-      if response == 1 || response == "1"
-        puts ""
-        break
-      end
-    end
+  # Waiting for play to start, then exit
+  puts "Waiting for play to start, querying application every 2 seconds from Thread[#{Thread.current.object_id}]"
+  while true
+    sleep 2
+    print '.'
+    response = `curl -Is http://#{instance.dns_name} | grep -c 303`.strip
     
+    if response == 1 || response == "1"
+      puts ""
+      break
+    end
+  end
+}
+
+# Swap instances
+if options[:configuration][:aws][:elb]
+  # Add/Register instance to loadbalancer
+  options[:configuration][:aws][:ec2][:instances].each do |instance|
     puts "Adding node #{instance.dns_name} to #{options[:configuration][:aws][:elb].name} from Thread[#{Thread.current.object_id}]"
     options[:configuration][:aws][:elb].instances.register(instance)
   end
-}
+  
+  # Swap instances on load balancer with newly created instances
+  puts "Swapping instances on load balancer now..."
+  system("./bin/swap_instance -l #{options[:configuration][:aws][:elb].name} -i #{options[:configuration][:aws][:ec2][:instances].join(',')}")
+end
 
 options[:time][:build][:finish] = ((Time.now - options[:time][:build][:start]) / 60).round(2)
 options[:time][:main][:finish]  = ((Time.now - options[:time][:main][:start]) / 60).round(2)
 
 puts "Completed[Build] in #{options[:time][:build][:finish]} minutes."
 puts "Completed[Main] in #{options[:time][:main][:finish]} minutes."
+puts options[:configuration][:aws][:ec2][:instances].collect { |i| i.id }

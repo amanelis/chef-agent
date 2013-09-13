@@ -61,6 +61,8 @@ options[:test_mode] = false
 # Main configuration for the nodes is specified here. 
 options[:configuration] = {
   :aws => {
+    :access_key_id => nil,
+    :secret_access_key => nil,
     :credentials_file => '/private/signifyd/aws/aws-credentials.yml',
     :ec2 => {
       :default_sleep_second => 240,

@@ -1,0 +1,205 @@
+#! /usr/bin/ruby -i
+#
+# Create script that you give -l loadbalancer -i instance_ids, it replaces existing instances with instanes you gave it
+# 1 Deploy job - number of nodes (replace exiting ones, count in load balancer passed in), make loadbalancer required, need to know to get nodes
+#   build_url.
+#
+# Input
+# load_balancer
+# new_instances
+
+# Class patching
+# Enumerable#in_parallel: allows you to parallelize work on collections.
+module Enumerable
+  def in_parallel
+    map{ |x| Thread.new { yield(x) } }.each{ |t| t.join }
+  end
+end
+
+# Start by checking that there is always the two rubygem dependencies installed.
+begin 
+  orig_stdout = $stdout.dup
+  $stdout.reopen('/dev/null', 'w')
+
+  system('gem install aws-sdk --no-ri --no-rdoc')       unless system('gem list | grep aws-sdk')
+  system('gem install net-ssh --no-ri --no-rdoc')       unless system('gem list | grep net-ssh')
+  system 'gem install net-ssh-multi --no-ri --no-rdoc'  unless system('gem list | grep net-ssh-multi')
+ensure
+  $stdout.reopen(orig_stdout)
+end
+
+# Require Ruby standard libs first.
+require 'rubygems'
+require 'fcntl'
+require 'optparse'
+require 'yaml'
+
+# Require all third party packages.
+require 'aws-sdk'
+require 'net/ssh'
+require 'net/ssh/multi'
+
+# Options hash will contain all preset data for doing a valid deploy. Reference here for
+# environment variables and any variable used throughout the provision/deployment.
+options = {}
+
+# Well always assume 'test' env unless specified otherwise
+options[:env] = :test
+
+# If you want to supress/sync STDOUT
+options[:stdout] = true
+
+# Test mode will turn off real AWS interaction on certain work that needs to be done.
+options[:test_mode] = false
+
+# Main configuration for the nodes is specified here. 
+options[:configuration] = {
+  :aws => {
+    :access_key_id => nil,
+    :secret_access_key => nil,
+    :credentials_file => '/private/signifyd/aws/aws-credentials.yml',
+    :elb => nil,
+    :ec2 => {
+      :current => [],
+      :instances => []
+    }
+  }
+}
+
+# First check and see if keys exist to make a valid AWS connection. It will exit here
+# if no keys are found and/or if authentication fails.
+if File.exists?(options[:configuration][:aws][:credentials_file]) 
+  credentials = YAML::load(File.open(options[:configuration][:aws][:credentials_file], 'r'))
+  
+  # Set environment variables, this basically exports this to the current
+  # environment in the running shell.
+  ENV['EC2_ACCESS_KEY'] = credentials['aws']['access_key_id']
+  ENV['EC2_SECRET_KEY'] = credentials['aws']['secret_access_key']
+  
+  options[:configuration][:aws][:access_key_id]     = credentials['aws']['access_key_id']
+  options[:configuration][:aws][:secret_access_key] = credentials['aws']['secret_access_key']
+  
+  # Configure AWS
+  AWS.config(:access_key_id => options[:configuration][:aws][:access_key_id], :secret_access_key => options[:configuration][:aws][:secret_access_key])
+else
+  puts "--------------------------------------------------------------------"
+  puts "\033[22;31mCould not find a valid credential file at #{options[:configuration][:aws][:credentials_file]}\033[37m"
+  puts "--------------------------------------------------------------------"
+  exit 1
+end
+
+# Capture STDIN here and parse out if STDIN contains node information. This block of code 
+# is important, if we decided to pipe( | ) data into this script, we will need to configure
+# and store it from here.
+unless $stdin.tty?
+  $stdin.each_line do |line|
+    # Save any STDIN input that contains or looks like an AWS instance ID => i-12345678
+    options[:configuration][:aws][:ec2][:instances] << line.strip if line.strip =~ /^i-([a-zA-Z0-9]{8})$/ 
+  end
+end
+
+# Build a few objets we will need in OptionParser and throughout the script.
+EC2 = AWS::EC2.new
+ELB = AWS::ELB.new
+AS3 = AWS::S3.new
+
+# Get all load balancers and EC2 instances under account.
+load_balancers = ELB.load_balancers
+ec2_instances  = EC2.instances
+
+OptionParser.new do |parser|
+  parser.banner = "USAGE: boot_instance [options]"
+  parser.separator ""
+  parser.separator "Specific options:"
+  
+  parser.on("-i", "--instances ARRAY", Array, "\033[32mRequired\033[37m. Pass a comma seperated list of EC2 instance ids that will be booted with build. \033[31mDO NOT PUT SPACES BETWEEN IDS AND COMMAS\033[37m") do |setting|
+    if setting.empty?
+      puts "You passed an invalid list of AWS instances, please try again."
+      exit 1
+    else
+      # Save the instances into the options hash
+      setting.collect { |instance_id| 
+        next if options[:configuration][:aws][:ec2][:instances].include?(instance_id)
+        options[:configuration][:aws][:ec2][:instances] << instance_id
+      }
+    end
+  end
+  
+  parser.on("-l", "--loadbalancer LOAD_BALANCER", "\033[35mOptional\033[37m. Pass the load balancer (AWS NAME) the nodes will be added to.") do |setting|
+    if setting.nil?
+      puts "You passed in invalid argument for switch: -l | --loadbalancer, please try again."
+      exit 1
+    else
+      if load_balancers.collect(&:name).include?(setting.strip)
+        options[:configuration][:aws][:elb] = load_balancers[setting.strip]
+      else
+        puts "Your argument (\033[35m#{setting}\033[37m) for -l | --loadbalancer was not found under the AWS account connected, please try again."
+        exit 1
+      end
+    end
+  end
+  
+  parser.on("-s", "--sync-output BOOLEAN", "\033[35mOptional\033[37m. Syncs stdout with console so wait progress is enabled. Default enabled.") do |setting|
+    options[:stdout] = setting
+  end
+  
+  parser.on("-t", "--test", "\033[35mOptional\033[37m. Enable test environment and don't do any instance work.") do |setting|
+    options[:test_mode] = true
+  end
+
+  parser.on_tail("-h", "--help", "--usage", "\033[36mHelp\033[37m. Show this usage message and quit.") do |setting|
+    puts parser.help
+    exit 1
+  end
+end.parse!(ARGV)
+
+# Sync standard out
+$stdout.sync = options[:stdout]
+
+# Check for a valid load balancer
+if options[:configuration][:aws][:elb].nil?
+  puts "No valid '\033[22;31m-l OR --loadbalancer\033[37m' passed. You must pass a valid loadbalancer."
+  exit 1
+else
+  # Now grab current instances off the lb and save to options hash
+  options[:configuration][:aws][:ec2][:current] = options[:configuration][:aws][:elb].instances
+end
+
+# Check for nil or empty instances, must be present to continue and must be in AWS account to continue as well.
+if options[:configuration][:aws][:ec2][:instances].empty? || options[:configuration][:aws][:ec2][:instances].nil?
+  puts "No valid '\033[22;31m-i OR --instances\033[37m' passed. You must pipe a list of AWS instances into this executable or pass in as a comma seperated list."
+  exit 1
+else 
+  # Source instances in instance array and checks to see if instances passed via STDIN are actually in AWS account. For testing, included the --test
+  # flag as an cmd line argument and it won't check the account for valid instances
+  
+  ec2_instance_ids = ec2_instances.collect(&:id)
+  options[:configuration][:aws][:ec2][:instances] = options[:configuration][:aws][:ec2][:instances].inject([]) { |a, i|
+    next a unless ec2_instance_ids.include?(i)
+    a << EC2.instances[i]
+  } unless options[:test_mode]
+    
+  if options[:configuration][:aws][:ec2][:instances].nil? || options[:configuration][:aws][:ec2][:instances].empty?
+    puts "\033[35mThe configuration set has no valid AWS instances, so it cannot continue.\033[37m"
+    puts "\033[35mCheck the AWS instance IDs that are being passed in via STDIN and be sure\033[37m"
+    puts "\033[35mthey match valid AWS IDs in the account specified by AWS credential keys.\033[37m"
+    exit 1
+  end
+end
+
+# Proceed with instance swap
+options[:configuration][:aws][:ec2][:instances].each do |instance|
+  # Add/Register instance to loadbalancer
+  puts " => Adding #{instance.id} to #{options[:configuration][:aws][:elb].name}"
+  options[:configuration][:aws][:elb].instances.register(instance)
+end
+
+# Proceed with instnace deregister
+options[:configuration][:aws][:ec2][:currrent].each do |instance|
+  # Remove/Deregister instance to loadbalancer
+  puts " => Removing/Terminating #{instance.id} to #{options[:configuration][:aws][:elb].name}"
+  options[:configuration][:aws][:elb].instances.deregister(instance)
+  
+  # Terminate instance
+  instance.terminate unless options[:test_mode]
+end
