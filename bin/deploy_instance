@@ -377,7 +377,7 @@ options[:configuration][:aws][:ec2][:instances].in_parallel{ |instance|
   
   # Waiting for play to start, then exit
   wait_count = 0
-  puts "Waiting for play to start, querying application every 2 seconds from Thread[#{Thread.current.object_id}]"
+  puts "Waiting for play to start at #{instance.dns_name}, querying application every 2 seconds from Thread[#{Thread.current.object_id}]"
   while true
     puts " -> sleeping for 2 minutes on count[#{wait_count}]..."
     sleep 120
