@@ -369,8 +369,9 @@ if options[:configuration][:aws][:elb]
     options[:configuration][:aws][:elb].instances.register(instance)
   end
   
-  # Swap instances on load balancer with newly created instances
+  # Swap instances on load balancer with newly created instances only if there are instances 
   puts "Swapping instances on load balancer now..."
+  puts "  => #{options[:configuration][:aws][:ec2][:instances].join(',')}"
   system("./bin/swap_instance -l #{options[:configuration][:aws][:elb].name} -i #{options[:configuration][:aws][:ec2][:instances].join(',')}")
 end
 
