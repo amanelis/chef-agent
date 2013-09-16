@@ -157,11 +157,6 @@ $stdout.sync = options[:stdout]
 if options[:configuration][:aws][:elb].nil?
   puts "No valid '\033[22;31m-l OR --loadbalancer\033[37m' passed. You must pass a valid loadbalancer."
   exit 1
-else
-  # Now grab current instances off the lb and save to options hash
-  options[:configuration][:aws][:elb].instances.each do |instance|
-    options[:configuration][:aws][:ec2][:current] << instance
-  end
 end
 
 # Check for nil or empty instances, must be present to continue and must be in AWS account to continue as well.
@@ -184,6 +179,14 @@ else
     puts "\033[35mthey match valid AWS IDs in the account specified by AWS credential keys.\033[37m"
     exit 1
   end
+end
+
+# Checks and removes instance ids from the current lb that were just added. This
+# keeps the new instances from getting nuked and removed from the loadbalancer.
+instance_ids = options[:configuration][:aws][:ec2][:instances].collect(&:id)
+options[:configuration][:aws][:elb].instances.each do |instance|
+  next if instance_ids.include?(instnace.id)
+  options[:configuration][:aws][:ec2][:current] << instance
 end
 
 # Proceed with instance swap
