@@ -303,7 +303,7 @@ if options[:configuration][:aws][:ec2][:instances].empty? || options[:configurat
       create_instances = "Starting deploy of servers...\ni-12345678\ni-12345687\n\nAlex \n"
     else
       puts "Calling $ bin/boot_instance -n #{number_of_instances}"
-      create_instances = system("./bin/boot_instance -n #{number_of_instances}").strip
+      create_instances = `./bin/boot_instance -n #{number_of_instances}`.strip
     end
     
     # Now parse out instances created
