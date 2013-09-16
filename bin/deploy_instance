@@ -371,8 +371,8 @@ if options[:configuration][:aws][:elb]
   
   # Swap instances on load balancer with newly created instances only if there are instances 
   puts "Swapping instances on load balancer now..."
-  puts "  => #{options[:configuration][:aws][:ec2][:instances].join(',')}"
-  system("./bin/swap_instance -l #{options[:configuration][:aws][:elb].name} -i #{options[:configuration][:aws][:ec2][:instances].join(',')}")
+  puts "  => #{options[:configuration][:aws][:ec2][:instances].collect(&:id).join(',')}"
+  system("./bin/swap_instance -l #{options[:configuration][:aws][:elb].name} -i #{options[:configuration][:aws][:ec2][:instances].collect(&:id).join(',')}")
 end
 
 options[:time][:build][:finish] = ((Time.now - options[:time][:build][:start]) / 60).round(2)
