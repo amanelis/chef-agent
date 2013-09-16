@@ -159,23 +159,25 @@ if options[:configuration][:aws][:elb].nil?
   exit 1
 else
   # Now grab current instances off the lb and save to options hash
-  options[:configuration][:aws][:ec2][:current] = options[:configuration][:aws][:elb].instances
+  options[:configuration][:aws][:elb].instances.each do |instance|
+    options[:configuration][:aws][:ec2][:current] << instance
+  end
 end
 
 # Check for nil or empty instances, must be present to continue and must be in AWS account to continue as well.
 if options[:configuration][:aws][:ec2][:instances].empty? || options[:configuration][:aws][:ec2][:instances].nil?
   puts "No valid '\033[22;31m-i OR --instances\033[37m' passed. You must pipe a list of AWS instances into this executable or pass in as a comma seperated list."
   exit 1
-else 
+else
   # Source instances in instance array and checks to see if instances passed via STDIN are actually in AWS account. For testing, included the --test
   # flag as an cmd line argument and it won't check the account for valid instances
-  
   ec2_instance_ids = ec2_instances.collect(&:id)
   options[:configuration][:aws][:ec2][:instances] = options[:configuration][:aws][:ec2][:instances].inject([]) { |a, i|
     next a unless ec2_instance_ids.include?(i)
     a << EC2.instances[i]
   } unless options[:test_mode]
-    
+
+  # Return if no instsances are available
   if options[:configuration][:aws][:ec2][:instances].nil? || options[:configuration][:aws][:ec2][:instances].empty?
     puts "\033[35mThe configuration set has no valid AWS instances, so it cannot continue.\033[37m"
     puts "\033[35mCheck the AWS instance IDs that are being passed in via STDIN and be sure\033[37m"
@@ -189,14 +191,14 @@ options[:configuration][:aws][:ec2][:instances].each do |instance|
   # Add/Register instance to loadbalancer
   puts " => Adding #{instance.id} to #{options[:configuration][:aws][:elb].name}"
   options[:configuration][:aws][:elb].instances.register(instance)
-end
+end unless options[:configuration][:aws][:ec2][:instances].nil?
 
 # Proceed with instnace deregister
-options[:configuration][:aws][:ec2][:currrent].each do |instance|
+options[:configuration][:aws][:ec2][:current].each do |instance|
   # Remove/Deregister instance to loadbalancer
   puts " => Removing/Terminating #{instance.id} to #{options[:configuration][:aws][:elb].name}"
   options[:configuration][:aws][:elb].instances.deregister(instance)
   
   # Terminate instance
   instance.terminate unless options[:test_mode]
-end
+end unless options[:configuration][:aws][:ec2][:current].nil?
