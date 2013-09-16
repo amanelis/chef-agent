@@ -29,8 +29,9 @@ begin
   orig_stdout = $stdout.dup
   $stdout.reopen('/dev/null', 'w')
 
-  system('gem install aws-sdk --no-ri --no-rdoc')       unless system('gem list | grep aws-sdk')
-  system('gem install net-ssh --no-ri --no-rdoc')       unless system('gem list | grep net-ssh')
+  system("gem install nokogiri -v '1.5.10' --no-ri --no-rdoc")  unless system("gem list | grep 'nokogiri (1.5.10)")
+  system("gem install aws-sdk --no-ri --no-rdoc")               unless system("gem list | grep aws-sdk")
+  system("gem install net-ssh --no-ri --no-rdoc")               unless system("gem list | grep net-ssh")
 ensure
   $stdout.reopen(orig_stdout)
 end
