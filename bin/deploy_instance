@@ -313,11 +313,6 @@ else
   end
 end
 
-
-p 
-system("./bin/swap_instance -l #{options[:configuration][:aws][:elb].name} -i #{options[:configuration][:aws][:ec2][:instances].join(',')} --test")
-exit
-
 # Build instructions to be run on the server, this is very important.
 instructions = [
   "/bin/rm -rf #{options[:configuration][:play][:build_directory]}/",
