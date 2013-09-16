@@ -284,6 +284,8 @@ $stdout.sync = options[:stdout]
 # Start timeer
 options[:time][:main][:start] = Time.now
 
+puts "Start deploying to all instances..."
+
 # Check for a valid build number that should have been passed to the script
 if options[:configuration][:aws][:s3][:bucket].nil? || options[:configuration][:aws][:s3][:build_number].nil? || 
    options[:configuration][:aws][:s3][:build_path].nil? || options[:configuration][:aws][:s3][:build_url].nil?
