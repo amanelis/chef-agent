@@ -36,6 +36,8 @@ ensure
   $stdout.reopen(orig_stdout)
 end
 
+exit
+
 # Require Ruby standard libs first.
 require 'rubygems'
 require 'fcntl'
