@@ -1,0 +1,139 @@
+#! /usr/bin/ruby -i
+
+# Author: Alex Manelis <manelis@signifyd.com>
+# Description: The goal of this script is to be sure that all running instances
+#   on the given load balancer are healthy. If they are not, we will want to login
+#   via ssh and restart play until they are healthy
+#
+# To start, there is one required switches that must be passed.
+#   -l/--loadbalancer => require a valid loadbalancer to be given.
+
+# Class patching
+# Enumerable#in_parallel: allows you to parallelize work on collections.
+module Enumerable
+  def in_parallel
+    map{ |x| Thread.new { yield(x) } }.each{ |t| t.join }
+  end
+end
+
+# Start by checking that there is always the two rubygem dependencies installed.
+begin 
+  orig_stdout = $stdout.dup
+  $stdout.reopen('/dev/null', 'w')
+
+  system("gem install aws-sdk --no-ri --no-rdoc")               unless system("gem list | grep aws-sdk")
+  system("gem install net-ssh --no-ri --no-rdoc")               unless system("gem list | grep net-ssh")
+ensure
+  $stdout.reopen(orig_stdout)
+end
+
+# Require Ruby standard libs first.
+require 'rubygems'
+require 'optparse'
+require 'yaml'
+
+# Require all third party packages.
+require 'aws-sdk'
+require 'net/ssh'
+
+# Options hash will contain all preset data for doing a valid deploy. Reference here for
+# environment variables and any variable used throughout the provision/deployment.
+options = {}
+
+# Well always assume 'test' env unless specified otherwise
+options[:env] = :test
+
+# If you want to supress/sync STDOUT
+options[:stdout] = true
+
+# Test mode will turn off real AWS interaction on certain work that needs to be done.
+options[:test_mode] = false
+
+# Main configuration for the nodes is specified here. 
+options[:configuration] = {
+  :aws => {
+    :access_key_id => nil,
+    :secret_access_key => nil,
+    :credentials_file => '/private/signifyd/aws/aws-credentials.yml',
+    :elb => nil
+  }
+}
+
+# First check and see if keys exist to make a valid AWS connection. It will exit here
+# if no keys are found and/or if authentication fails.
+if File.exists?(options[:configuration][:aws][:credentials_file]) 
+  credentials = YAML::load(File.open(options[:configuration][:aws][:credentials_file], 'r'))
+  
+  # Set environment variables, this basically exports this to the current
+  # environment in the running shell.
+  ENV['EC2_ACCESS_KEY'] = credentials['aws']['access_key_id']
+  ENV['EC2_SECRET_KEY'] = credentials['aws']['secret_access_key']
+  
+  options[:configuration][:aws][:access_key_id]     = credentials['aws']['access_key_id']
+  options[:configuration][:aws][:secret_access_key] = credentials['aws']['secret_access_key']
+  
+  # Configure AWS
+  AWS.config(:access_key_id => options[:configuration][:aws][:access_key_id], :secret_access_key => options[:configuration][:aws][:secret_access_key])
+else
+  puts "--------------------------------------------------------------------"
+  puts "\033[22;31mCould not find a valid credential file at #{options[:configuration][:aws][:credentials_file]}\033[37m"
+  puts "--------------------------------------------------------------------"
+  exit 1
+end
+
+# Build a few objets we will need in OptionParser and throughout the script.
+EC2 = AWS::EC2.new
+ELB = AWS::ELB.new
+AS3 = AWS::S3.new
+
+# Get all load balancers and EC2 instances under account.
+load_balancers = ELB.load_balancers
+ec2_instances  = EC2.instances
+
+OptionParser.new do |parser|
+  parser.banner = "USAGE: boot_instance [options]"
+  parser.separator ""
+  parser.separator "Specific options:"
+  
+  parser.on("-l", "--loadbalancer LOAD_BALANCER", "\033[35mOptional\033[37m. Pass the load balancer (AWS NAME) the nodes will be added to.") do |setting|
+    if setting.nil?
+      puts "You passed in invalid argument for switch: -l | --loadbalancer, please try again."
+      exit 1
+    else
+      if load_balancers.collect(&:name).include?(setting.strip)
+        options[:configuration][:aws][:elb] = load_balancers[setting.strip]
+      else
+        puts "Your argument (\033[35m#{setting}\033[37m) for -l | --loadbalancer was not found under the AWS account connected, please try again."
+        exit 1
+      end
+    end
+  end
+  
+  parser.on("-s", "--sync-output BOOLEAN", "\033[35mOptional\033[37m. Syncs stdout with console so wait progress is enabled. Default enabled.") do |setting|
+    options[:stdout] = setting
+  end
+  
+  parser.on("-t", "--test", "\033[35mOptional\033[37m. Enable test environment and don't do any instance work.") do |setting|
+    options[:test_mode] = true
+  end
+
+  parser.on_tail("-h", "--help", "--usage", "\033[36mHelp\033[37m. Show this usage message and quit.") do |setting|
+    puts parser.help
+    exit 1
+  end
+end.parse!(ARGV)
+
+# Sync standard out
+$stdout.sync = options[:stdout]
+
+# Check for a valid load balancer
+if options[:configuration][:aws][:elb].nil?
+  puts "No valid '\033[22;31m-l OR --loadbalancer\033[37m' passed. You must pass a valid loadbalancer."
+  exit 1
+end
+
+
+
+
+
+
