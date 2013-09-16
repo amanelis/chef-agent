@@ -57,7 +57,7 @@ options[:configuration] = {
     :credentials_file => '/private/signifyd/aws/aws-credentials.yml',
     :elb => nil,
     :ec2 => {
-      :current => [],
+      :current   => [],
       :instances => []
     }
   }

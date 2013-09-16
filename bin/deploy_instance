@@ -42,7 +42,7 @@
 # Enumerable#in_parallel: allows you to parallelize work on collections.
 module Enumerable
   def in_parallel
-    map { |x| Thread.new { yield(x) } }.each{ |t| t.join }
+    map{ |x| Thread.new { yield(x) } }.each{ |t| t.join }
   end
 end
 
@@ -60,6 +60,7 @@ end
 # Require Ruby standard libs first.
 require 'rubygems'
 require 'optparse'
+require 'timeout'
 require 'yaml'
 
 # Require all third party packages.
@@ -87,6 +88,7 @@ options[:configuration] = {
     :credentials_file => '/private/signifyd/aws/aws-credentials.yml',
     :elb => nil,
     :ec2 => {
+      :current   => [],
       :instances => []
     },
     :s3 => {
@@ -145,6 +147,9 @@ unless $stdin.tty?
     # Save any STDIN input that contains or looks like an AWS instance ID => i-12345678
     options[:configuration][:aws][:ec2][:instances] << line.strip if line.strip =~ /^i-([a-zA-Z0-9]{8})$/ 
   end
+  
+  # Be sure all instances added are uniq
+  options[:configuration][:aws][:ec2][:instances] = options[:configuration][:aws][:ec2][:instances].uniq
 end
 
 # Build a few objets we will need in OptionParser and throughout the script.
@@ -162,10 +167,7 @@ OptionParser.new do |parser|
   parser.separator "Specific options:"
   
   parser.on("-i", "--instances ARRAY", Array, "\033[32mRequired\033[37m. Pass a comma seperated list of EC2 instance ids that will be booted with build. \033[31mDO NOT PUT SPACES BETWEEN IDS AND COMMAS\033[37m") do |setting|
-    if setting.empty?
-      puts "You passed an invalid list of AWS instances, please try again."
-      exit 1
-    else
+    unless setting.empty?
       setting.collect { |instance_id| 
         next if options[:configuration][:aws][:ec2][:instances].include?(instance_id)
         options[:configuration][:aws][:ec2][:instances] << instance_id
@@ -284,8 +286,6 @@ $stdout.sync = options[:stdout]
 # Start timeer
 options[:time][:main][:start] = Time.now
 
-puts "Start deploying to all instances..."
-
 # Check for a valid build number that should have been passed to the script
 if options[:configuration][:aws][:s3][:bucket].nil? || options[:configuration][:aws][:s3][:build_number].nil? || 
    options[:configuration][:aws][:s3][:build_path].nil? || options[:configuration][:aws][:s3][:build_url].nil?
@@ -293,14 +293,42 @@ if options[:configuration][:aws][:s3][:bucket].nil? || options[:configuration][:
   exit 1
 end
 
-# Check for nil or empty instances, must be present to continue and must be in AWS account to continue as well.
+# Check for nil or empty instances, if they are empty, we will boot number of instances in load balancer
 if options[:configuration][:aws][:ec2][:instances].empty? || options[:configuration][:aws][:ec2][:instances].nil?
-  puts "No valid '\033[22;31m-i OR --instances\033[37m' passed. You must pipe a list of AWS instances into this executable or pass in as a comma seperated list."
-  exit 1
+  # This means no servers were passed in via STDIN or cmd line arguments, lets create some based on loadbalancer
+  number_of_instances = options[:configuration][:aws][:elb].instances.count unless options[:configuration][:aws][:elb].instances.nil?
+  
+  if number_of_instances >= 1 || options[:test_mode]
+    if options[:test_mode]
+      create_instances = "Starting deploy of servers...\ni-12345678\ni-12345687\n\nAlex \n"
+    else
+      puts "Calling $ bin/boot_instance -n #{number_of_instances}"
+      create_instances = system("./bin/boot_instance -n #{number_of_instances}").strip
+    end
+    
+    # Now parse out instances created
+    temp_instances = create_instances.split(/\r?\n/).collect(&:strip).reject { |i| i.nil? || i == "" }
+    
+    # Iterate through all STDIN entries and find the one that matches an instance
+    temp_instances.each do |line_instance|
+      if line_instance =~ /^i-([a-zA-Z0-9]{8})$/ 
+        options[:configuration][:aws][:ec2][:instances] << line_instance
+      end
+    end
+    
+    # Now source the real instance IDs and replace string IDs with real AWS instances
+    ec2_instance_ids = ec2_instances.collect(&:id) unless options[:test_mode]
+    options[:configuration][:aws][:ec2][:instances] = options[:configuration][:aws][:ec2][:instances].inject([]) { |a, i|
+      next a unless ec2_instance_ids.include?(i)
+      a << EC2.instances[i]
+    } unless options[:test_mode]
+  else
+    puts "There are no instances to create from the loadbalancer, please specify by passing instances via -i or STDIN, exiting..."
+    exit 1
+  end
 else 
   # Source instances in instance array and checks to see if instances passed via STDIN are actually in AWS account. For testing, included the --test
   # flag as an cmd line argument and it won't check the account for valid instances
-  
   ec2_instance_ids = ec2_instances.collect(&:id)
   options[:configuration][:aws][:ec2][:instances] = options[:configuration][:aws][:ec2][:instances].inject([]) { |a, i|
     next a unless ec2_instance_ids.include?(i)
@@ -348,16 +376,38 @@ options[:configuration][:aws][:ec2][:instances].in_parallel{ |instance|
   end
   
   # Waiting for play to start, then exit
+  wait_count = 0
   puts "Waiting for play to start, querying application every 2 seconds from Thread[#{Thread.current.object_id}]"
   while true
-    sleep 2
+    puts " -> sleeping for 2 minutes on count[#{wait_count}]..."
+    sleep 120
     print '.'
-    response = `curl -Is http://#{instance.dns_name} | grep -c 303`.strip
+    
+    # Watch for Timeout
+    begin 
+      response = Timeout.timeout(10) do
+        `curl -Is http://#{instance.dns_name} | grep -c 303`.strip
+      end
+    rescue Timeout::Error => e
+      puts "Timeout::Error => #{e}"
+      puts "Timeout on starting play for #{instance.dns_name} from Thread[#{Thread.current.object_id}]"
+      puts "Please remove instances #{options[:configuration][:aws][:ec2][:instances].collect(&:id).join(',')}"
+      exit 1
+    end
     
     if response == 1 || response == "1"
       puts ""
       break
     end
+    
+    if wait_count == 3
+      puts "Wait_count hit[#{wait_count}] starting play for #{instance.dns_name} from Thread[#{Thread.current.object_id}]"
+      puts "Please remove instances #{options[:configuration][:aws][:ec2][:instances].collect(&:id).join(',')}"
+      exit 1
+    end
+    
+    # Increment wait_count
+    wait_count +=1
   end
 }
 
@@ -370,8 +420,8 @@ if options[:configuration][:aws][:elb]
   end
   
   # Swap instances on load balancer with newly created instances only if there are instances 
-  puts "Swapping instances on load balancer now..."
-  puts "  => #{options[:configuration][:aws][:ec2][:instances].collect(&:id).join(',')}"
+  puts "Swapping instances on loadbalancer[#{options[:configuration][:aws][:elb].name}] now..."
+  puts "Calling $ bin/swap_instance -l #{options[:configuration][:aws][:elb].name} -i #{options[:configuration][:aws][:ec2][:instances].collect(&:id).join(',')}"
   system("./bin/swap_instance -l #{options[:configuration][:aws][:elb].name} -i #{options[:configuration][:aws][:ec2][:instances].collect(&:id).join(',')}")
 end
 
@@ -380,4 +430,4 @@ options[:time][:main][:finish]  = ((Time.now - options[:time][:main][:start]) / 
 
 puts "Completed[Build] in #{options[:time][:build][:finish]} minutes."
 puts "Completed[Main] in #{options[:time][:main][:finish]} minutes."
-puts options[:configuration][:aws][:ec2][:instances].collect { |i| i.id }
+puts options[:configuration][:aws][:ec2][:instances].collect(&:id)

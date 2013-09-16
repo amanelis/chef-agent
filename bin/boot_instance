@@ -175,6 +175,7 @@ instances.in_parallel{ |instance|
 options[:time][:chef][:finish] = ((Time.now - options[:time][:chef][:start]) / 60).round(2)
 options[:time][:main][:finish] = ((Time.now - options[:time][:main][:start]) / 60).round(2)
 
+puts "Instances: #{instances.join(',')}"
 puts "Completed[Chef] in #{options[:time][:chef][:finish]} minutes."
 puts "Completed[Main] in #{options[:time][:main][:finish]} minutes."
 puts instances.collect { |i| i.id }
