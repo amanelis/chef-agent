@@ -381,7 +381,6 @@ options[:configuration][:aws][:ec2][:instances].in_parallel{ |instance|
   while true
     puts " -> sleeping for 2 minutes on count[#{wait_count}]..."
     sleep 120
-    print '.'
     
     # Watch for Timeout
     begin 
