@@ -1,12 +1,28 @@
 #! /usr/bin/ruby -i
+
+# Author: Alex Manelis <manelis@signifyd.com>
+# Description: The 'swap_instance' script swaps given instances with the load balancers current instances running.
+#   The job can be a bit desctuctive for it breaks down the load balancer by removing old instances and adds new ones. 
+#   To run this script, you will have to pass two mandatory arguments, the first being the load_balancer and the
+#   second being the list of instnaces. It will take the given load balancer and record the current instances that
+#   are running on it. It will then store the instances passed via the command line arguments. Given this data, it
+#   will attempt to add the new instances (that are running) to the load balancer, remove and terminate the old
+#   running instnaces. 
 #
-# Create script that you give -l loadbalancer -i instance_ids, it replaces existing instances with instanes you gave it
-# 1 Deploy job - number of nodes (replace exiting ones, count in load balancer passed in), make loadbalancer required, need to know to get nodes
-#   build_url.
+# To start, there are two required switches that must be passed.
+#   -l/--loadbalancer => require a valid loadbalancer to be given.
+#   -i/--instances  => require a list of AWS instance ids to be given.
 #
-# Input
-# load_balancer
-# new_instances
+#   Examples:
+#     $ bin/swap_instance -l test-jenkins -i i-12345678,i-12345678
+#   Result:
+#     Will add instances (i-12345678,i-12345678) to the load_balancer (test-jenkins) and remove any other instances
+#     that are running on the load balancer as well as terminate them. 
+#
+#   Caveats:
+#     Destructive in two ways. First, removes all instances from the load balancer and the second, it has the ability
+#     to terminate instances from the AWS account. 
+
 
 # Class patching
 # Enumerable#in_parallel: allows you to parallelize work on collections.
@@ -185,7 +201,7 @@ end
 # keeps the new instances from getting nuked and removed from the loadbalancer.
 instance_ids = options[:configuration][:aws][:ec2][:instances].collect(&:id)
 options[:configuration][:aws][:elb].instances.each do |instance|
-  next if instance_ids.include?(instnace.id)
+  next if instance_ids.include?(instance.id)
   options[:configuration][:aws][:ec2][:current] << instance
 end
 

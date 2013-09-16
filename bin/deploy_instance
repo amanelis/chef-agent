@@ -1,13 +1,13 @@
 #! /usr/bin/ruby -i
 
 # Author: Alex Manelis <manelis@signifyd.com>
-# Synopsis: This script is ment to do one thing. Take a list of AWS EC2 instance
-# prepare and install the build that is passed in by -b onto the instace
-# ids and add them to a given load balancer. Baiscally it can be done 2 ways. 
+# Description: This script is ment to do one thing. Take a list of AWS EC2 instance
+#   prepare and install the build that is passed in by -b onto the instace
+#   ids and add them to a given load balancer. Baiscally it can be done 2 ways. 
 # 
 # To start, there are two required switches that must be passed.
-# -l/--loadbalancer => require a valid loadbalancer to be given.
-# -e/--environment  => require the given environment to start play.
+#   -l/--loadbalancer => require a valid loadbalancer to be given.
+#   -e/--environment  => require the given environment to start play.
 #
 # Once these two switches are enabled, you can do one of the following ways.
 #
@@ -363,7 +363,7 @@ puts "Running Build on all instances created..."
 options[:time][:build][:start] = Time.now
 options[:configuration][:aws][:ec2][:instances].in_parallel{ |instance| 
   # Tag the instances to the current env
-  instance.add_tag('Name', :value => "platform-#{options[:env].to_s}-xx")
+  instance.add_tag('Name', :value => "platform-#{options[:env].to_s}-#{options[:configuration][:aws][:s3][:build_number]}")
   
   # Do the work via SSH
   puts "SSH into #{instance.dns_name} from Thread[#{Thread.current.object_id}]"
