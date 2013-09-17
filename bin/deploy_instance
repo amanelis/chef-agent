@@ -419,12 +419,6 @@ options[:configuration][:aws][:ec2][:instances].in_parallel{ |instance|
 
 # Swap instances
 if options[:configuration][:aws][:elb]
-  # Add/Register instance to loadbalancer
-  # options[:configuration][:aws][:ec2][:instances].each do |instance|
-  #   puts "Adding node #{instance.dns_name} to #{options[:configuration][:aws][:elb].name} from Thread[#{Thread.current.object_id}]"
-  #   options[:configuration][:aws][:elb].instances.register(instance)
-  # end
-  
   # Swap instances on load balancer with newly created instances only if there are instances 
   puts "Swapping instances on loadbalancer[#{options[:configuration][:aws][:elb].name}] now..."
   puts "Calling $ bin/swap_instance -l #{options[:configuration][:aws][:elb].name} -i #{options[:configuration][:aws][:ec2][:instances].collect(&:id).join(',')}"
