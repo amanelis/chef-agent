@@ -401,7 +401,7 @@ options[:configuration][:aws][:ec2][:instances].in_parallel{ |instance|
     
     if wait_count == 3
       puts "Wait_count hit[#{wait_count}] starting play for #{instance.dns_name} from Thread[#{Thread.current.object_id}]"
-      puts "Terminating instance[#{instances.id}]"
+      puts "Terminating instance[#{instance.id}]"
       
       # Remove instance
       options[:configuration][:aws][:ec2][:instances].delete(instance)
