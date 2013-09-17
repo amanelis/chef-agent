@@ -1,12 +1,28 @@
 #! /usr/bin/ruby -i
 
 # Author: Alex Manelis <manelis@signifyd.com>
-# Description: The goal of this script is to be sure that all running instances
-#   on the given load balancer are healthy. If they are not, we will want to login
-#   via ssh and restart play until they are healthy
+# Description: The 'swap_instance' script swaps given instances with the load balancers current instances running.
+#   The job can be a bit desctuctive for it breaks down the load balancer by removing old instances and adds new ones. 
+#   To run this script, you will have to pass two mandatory arguments, the first being the load_balancer and the
+#   second being the list of instnaces. It will take the given load balancer and record the current instances that
+#   are running on it. It will then store the instances passed via the command line arguments. Given this data, it
+#   will attempt to add the new instances (that are running) to the load balancer, remove and terminate the old
+#   running instnaces. 
 #
-# To start, there is one required switches that must be passed.
+# To start, there are two required switches that must be passed.
 #   -l/--loadbalancer => require a valid loadbalancer to be given.
+#   -i/--instances  => require a list of AWS instance ids to be given.
+#
+#   Examples:
+#     $ bin/swap_instance -l test-jenkins -i i-12345678,i-12345678
+#   Result:
+#     Will add instances (i-12345678,i-12345678) to the load_balancer (test-jenkins) and remove any other instances
+#     that are running on the load balancer as well as terminate them. 
+#
+#   Caveats:
+#     Destructive in two ways. First, removes all instances from the load balancer and the second, it has the ability
+#     to terminate instances from the AWS account. 
+
 
 # Class patching
 # Enumerable#in_parallel: allows you to parallelize work on collections.
@@ -55,7 +71,11 @@ options[:configuration] = {
     :access_key_id => nil,
     :secret_access_key => nil,
     :credentials_file => '/private/signifyd/aws/aws-credentials.yml',
-    :elb => nil
+    :elb => nil,
+    :ec2 => {
+      :current   => [],
+      :instances => []
+    }
   }
 }
 
@@ -81,6 +101,16 @@ else
   exit 1
 end
 
+# Capture STDIN here and parse out if STDIN contains node information. This block of code 
+# is important, if we decided to pipe( | ) data into this script, we will need to configure
+# and store it from here.
+unless $stdin.tty?
+  $stdin.each_line do |line|
+    # Save any STDIN input that contains or looks like an AWS instance ID => i-12345678
+    options[:configuration][:aws][:ec2][:instances] << line.strip if line.strip =~ /^i-([a-zA-Z0-9]{8})$/ 
+  end
+end
+
 # Build a few objets we will need in OptionParser and throughout the script.
 EC2 = AWS::EC2.new
 ELB = AWS::ELB.new
@@ -94,6 +124,19 @@ OptionParser.new do |parser|
   parser.banner = "USAGE: boot_instance [options]"
   parser.separator ""
   parser.separator "Specific options:"
+  
+  parser.on("-i", "--instances ARRAY", Array, "\033[32mRequired\033[37m. Pass a comma seperated list of EC2 instance ids that will be booted with build. \033[31mDO NOT PUT SPACES BETWEEN IDS AND COMMAS\033[37m") do |setting|
+    if setting.empty?
+      puts "You passed an invalid list of AWS instances, please try again."
+      exit 1
+    else
+      # Save the instances into the options hash
+      setting.collect { |instance_id| 
+        next if options[:configuration][:aws][:ec2][:instances].include?(instance_id)
+        options[:configuration][:aws][:ec2][:instances] << instance_id
+      }
+    end
+  end
   
   parser.on("-l", "--loadbalancer LOAD_BALANCER", "\033[35mOptional\033[37m. Pass the load balancer (AWS NAME) the nodes will be added to.") do |setting|
     if setting.nil?
@@ -132,8 +175,31 @@ if options[:configuration][:aws][:elb].nil?
   exit 1
 end
 
+# Check for nil or empty instances, must be present to continue and must be in AWS account to continue as well.
+if options[:configuration][:aws][:ec2][:instances].empty? || options[:configuration][:aws][:ec2][:instances].nil?
+  puts "No valid '\033[22;31m-i OR --instances\033[37m' passed. You must pipe a list of AWS instances into this executable or pass in as a comma seperated list."
+  exit 1
+else
+  # Source instances in instance array and checks to see if instances passed via STDIN are actually in AWS account. For testing, included the --test
+  # flag as an cmd line argument and it won't check the account for valid instances
+  ec2_instance_ids = ec2_instances.collect(&:id)
+  options[:configuration][:aws][:ec2][:instances] = options[:configuration][:aws][:ec2][:instances].inject([]) { |a, i|
+    next a unless ec2_instance_ids.include?(i)
+    a << EC2.instances[i]
+  } unless options[:test_mode]
 
+  # Return if no instsances are available
+  if options[:configuration][:aws][:ec2][:instances].nil? || options[:configuration][:aws][:ec2][:instances].empty?
+    puts "\033[35mThe configuration set has no valid AWS instances, so it cannot continue.\033[37m"
+    puts "\033[35mCheck the AWS instance IDs that are being passed in via STDIN and be sure\033[37m"
+    puts "\033[35mthey match valid AWS IDs in the account specified by AWS credential keys.\033[37m"
+    exit 1
+  end
+end
 
-
-
-
+# Add instance to lb
+options[:configuration][:aws][:ec2][:instances].each do |instance|
+  # Add/Register instance to loadbalancer
+  puts " => Adding #{instance.id} to #{options[:configuration][:aws][:elb].name}"
+  options[:configuration][:aws][:elb].instances.register(instance)
+end unless options[:configuration][:aws][:ec2][:instances].nil?

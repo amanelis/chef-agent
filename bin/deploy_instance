@@ -296,6 +296,7 @@ end
 # Check for nil or empty instances, if they are empty, we will boot number of instances in load balancer
 if options[:configuration][:aws][:ec2][:instances].empty? || options[:configuration][:aws][:ec2][:instances].nil?
   # This means no servers were passed in via STDIN or cmd line arguments, lets create some based on loadbalancer
+  number_of_instances = 0
   number_of_instances = options[:configuration][:aws][:elb].instances.count unless options[:configuration][:aws][:elb].instances.nil?
   
   if number_of_instances >= 1 || options[:test_mode]
