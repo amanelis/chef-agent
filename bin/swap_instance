@@ -107,7 +107,10 @@ end
 unless $stdin.tty?
   $stdin.each_line do |line|
     # Save any STDIN input that contains or looks like an AWS instance ID => i-12345678
-    options[:configuration][:aws][:ec2][:instances] << line.strip if line.strip =~ /^i-([a-zA-Z0-9]{8})$/ 
+    if line.strip =~ /^i-([a-zA-Z0-9]{8})$/ 
+      puts "STDIN: #{line.strip}"
+      options[:configuration][:aws][:ec2][:instances] << line.strip 
+    end
   end
 end
 
