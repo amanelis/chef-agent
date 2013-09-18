@@ -298,35 +298,31 @@ if options[:configuration][:aws][:ec2][:instances].empty? || options[:configurat
   # This means no servers were passed in via STDIN or cmd line arguments, lets create some based on loadbalancer
   number_of_instances = 0
   number_of_instances = options[:configuration][:aws][:elb].instances.count unless options[:configuration][:aws][:elb].instances.nil?
+  number_of_instances = 2 if number_of_instances == 0
   
-  if number_of_instances >= 1 || options[:test_mode]
-    if options[:test_mode]
-      create_instances = "Starting deploy of servers...\ni-12345678\ni-12345687\n\nAlex \n"
-    else
-      puts "Calling $ bin/boot_instance -n #{number_of_instances}"
-      create_instances = `./bin/boot_instance -n #{number_of_instances}`.strip
-    end
-    
-    # Now parse out instances created
-    temp_instances = create_instances.split(/\r?\n/).collect(&:strip).reject { |i| i.nil? || i == "" }
-    
-    # Iterate through all STDIN entries and find the one that matches an instance
-    temp_instances.each do |line_instance|
-      if line_instance =~ /^i-([a-zA-Z0-9]{8})$/ 
-        options[:configuration][:aws][:ec2][:instances] << line_instance
-      end
-    end
-    
-    # Now source the real instance IDs and replace string IDs with real AWS instances
-    ec2_instance_ids = ec2_instances.collect(&:id) unless options[:test_mode]
-    options[:configuration][:aws][:ec2][:instances] = options[:configuration][:aws][:ec2][:instances].inject([]) { |a, i|
-      next a unless ec2_instance_ids.include?(i)
-      a << EC2.instances[i]
-    } unless options[:test_mode]
+  if options[:test_mode]
+    create_instances = "Starting deploy of servers...\ni-12345678\ni-12345687\n\nAlex \n"
   else
-    puts "There are no instances to create from the loadbalancer, please specify by passing instances via -i or STDIN, exiting..."
-    exit 1
+    puts "Calling $ bin/boot_instance -n #{number_of_instances}"
+    create_instances = `./bin/boot_instance -n #{number_of_instances}`.strip
   end
+  
+  # Now parse out instances created
+  temp_instances = create_instances.split(/\r?\n/).collect(&:strip).reject { |i| i.nil? || i == "" }
+  
+  # Iterate through all STDIN entries and find the one that matches an instance
+  temp_instances.each do |line_instance|
+    if line_instance =~ /^i-([a-zA-Z0-9]{8})$/ 
+      options[:configuration][:aws][:ec2][:instances] << line_instance
+    end
+  end
+  
+  # Now source the real instance IDs and replace string IDs with real AWS instances
+  ec2_instance_ids = ec2_instances.collect(&:id) unless options[:test_mode]
+  options[:configuration][:aws][:ec2][:instances] = options[:configuration][:aws][:ec2][:instances].inject([]) { |a, i|
+    next a unless ec2_instance_ids.include?(i)
+    a << EC2.instances[i]
+  } unless options[:test_mode]
 else 
   # Source instances in instance array and checks to see if instances passed via STDIN are actually in AWS account. For testing, included the --test
   # flag as an cmd line argument and it won't check the account for valid instances
@@ -343,6 +339,10 @@ else
     exit 1
   end
 end
+
+
+puts options[:configuration][:aws][:ec2][:instances].collect(&:id)
+exit
 
 # Build instructions to be run on the server, this is very important.
 instructions = [
