@@ -298,7 +298,7 @@ $stdout.sync = options[:stdout]
 options[:time][:main][:start] = Time.now
 
 # Must pass at least one option for elb, either --register or --swap
-if options[:commands][:register] == false || options[:commands][:swap] == false
+if options[:commands][:register] == false && options[:commands][:swap] == false
   puts "No valid '\033[22;31m-r/--register OR -s/--swap\033[30m' passed. You must choose one action to give to server."
   exit 1
 end
