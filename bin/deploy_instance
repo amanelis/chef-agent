@@ -298,10 +298,10 @@ $stdout.sync = options[:stdout]
 options[:time][:main][:start] = Time.now
 
 # Must pass at least one option for elb, either --register or --swap
-# if options[:commands][:register] == false || options[:commands][:swap] == false
-#   puts "No valid '\033[22;31m-r/--register OR -s/--swap\033[30m' passed. You must choose one action to give to server."
-#   exit 1
-# end
+if options[:commands][:register] == false || options[:commands][:swap] == false
+  puts "No valid '\033[22;31m-r/--register OR -s/--swap\033[30m' passed. You must choose one action to give to server."
+  exit 1
+end
 
 # Check for a valid build number that should have been passed to the script
 if options[:configuration][:aws][:s3][:bucket].nil? || options[:configuration][:aws][:s3][:build_number].nil? || 
@@ -427,21 +427,23 @@ options[:configuration][:aws][:ec2][:instances].collect { |instance|
   end
 }
 
-# # Swap instances
-# if options[:configuration][:aws][:elb] && options[:commands][:swap]
-#   # Swap instances on load balancer with newly created instances only if there are instances 
-#   puts "Swapping instances on loadbalancer[#{options[:configuration][:aws][:elb].name}] now..."
-#   puts "Calling $ bin/swap_instance -l #{options[:configuration][:aws][:elb].name} -i #{options[:configuration][:aws][:ec2][:instances].collect(&:id).join(',')}"
-#   swap_instances = `./bin/swap_instance -l #{options[:configuration][:aws][:elb].name} -i #{options[:configuration][:aws][:ec2][:instances].collect(&:id).join(',')}`
-# elsif options[:configuration][:aws][:elb] && options[:commands][:register]
-#   # Registering new instances
-#   puts "Registering instances on loadbalancer[#{options[:configuration][:aws][:elb].name}] now..."
-#   puts "Calling $ bin/register_instance -l #{options[:configuration][:aws][:elb].name} -i #{options[:configuration][:aws][:ec2][:instances].collect(&:id).join(',')}"
-# end
+puts "Threads have completed work on instances, moving to register/swap..."
+
+# Swap instances
+if options[:configuration][:aws][:elb] && options[:commands][:swap]
+  # Swap instances on load balancer with newly created instances only if there are instances 
+  puts "Swapping instances on loadbalancer[#{options[:configuration][:aws][:elb].name}] now..."
+  puts "Calling $ bin/swap_instance -l #{options[:configuration][:aws][:elb].name} -i #{options[:configuration][:aws][:ec2][:instances].collect(&:id).join(',')}"
+  swap_instances = `./bin/swap_instance -l #{options[:configuration][:aws][:elb].name} -i #{options[:configuration][:aws][:ec2][:instances].collect(&:id).join(',')}`
+elsif options[:configuration][:aws][:elb] && options[:commands][:register]
+  # Registering new instances
+  puts "Registering instances on loadbalancer[#{options[:configuration][:aws][:elb].name}] now..."
+  puts "Calling $ bin/register_instance -l #{options[:configuration][:aws][:elb].name} -i #{options[:configuration][:aws][:ec2][:instances].collect(&:id).join(',')}"
+end
 
 options[:time][:build][:finish] = ((Time.now - options[:time][:build][:start]) / 60).round(2)
 options[:time][:main][:finish]  = ((Time.now - options[:time][:main][:start]) / 60).round(2)
 
+puts options[:configuration][:aws][:ec2][:instances].collect { |i| i.id }
 puts "Completed[Build] in #{options[:time][:build][:finish]} minutes."
 puts "Completed[Main] in #{options[:time][:main][:finish]} minutes."
-puts options[:configuration][:aws][:ec2][:instances].collect { |i| i.id }
