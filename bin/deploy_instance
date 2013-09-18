@@ -300,12 +300,8 @@ if options[:configuration][:aws][:ec2][:instances].empty? || options[:configurat
   number_of_instances = options[:configuration][:aws][:elb].instances.count unless options[:configuration][:aws][:elb].instances.nil?
   number_of_instances = 2 if number_of_instances == 0
   
-  if options[:test_mode]
-    create_instances = "Starting deploy of servers...\ni-12345678\ni-12345687\n\nAlex \n"
-  else
-    puts "Calling $ bin/boot_instance -n #{number_of_instances}"
-    create_instances = `./bin/boot_instance -n #{number_of_instances}`.strip
-  end
+  puts "Calling $ bin/boot_instance -n #{number_of_instances}"
+  create_instances = `./bin/boot_instance -n #{number_of_instances}`.strip
   
   # Now parse out instances created
   temp_instances = create_instances.split(/\r?\n/).collect(&:strip).reject { |i| i.nil? || i == "" }
@@ -339,10 +335,6 @@ else
     exit 1
   end
 end
-
-
-puts options[:configuration][:aws][:ec2][:instances].collect(&:id)
-exit
 
 # Build instructions to be run on the server, this is very important.
 instructions = [
@@ -430,4 +422,4 @@ options[:time][:main][:finish]  = ((Time.now - options[:time][:main][:start]) / 
 
 puts "Completed[Build] in #{options[:time][:build][:finish]} minutes."
 puts "Completed[Main] in #{options[:time][:main][:finish]} minutes."
-puts options[:configuration][:aws][:ec2][:instances].collect(&:id)
+puts options[:configuration][:aws][:ec2][:instances].collect { |i| i.id }

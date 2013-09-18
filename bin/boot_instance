@@ -61,7 +61,7 @@ options[:configuration] = {
     :secret_access_key => nil,
     :credentials_file => '/private/signifyd/aws/aws-credentials.yml',
     :ec2 => {
-      :default_sleep_second => 240,
+      :default_sleep_second => 300,
       :instance_count => 1,
       :instance => {
         :image_id => 'ami-971758fe',
@@ -173,7 +173,6 @@ options[:configuration][:aws][:ec2][:instances].in_parallel{ |instance|
 options[:time][:chef][:finish] = ((Time.now - options[:time][:chef][:start]) / 60).round(2)
 options[:time][:main][:finish] = ((Time.now - options[:time][:main][:start]) / 60).round(2)
 
-puts "Instances: #{options[:configuration][:aws][:ec2][:instances].collect(&:id).join(',')}"
 puts "Completed[Chef] in #{options[:time][:chef][:finish]} minutes."
 puts "Completed[Main] in #{options[:time][:main][:finish]} minutes."
 puts options[:configuration][:aws][:ec2][:instances].collect { |i| i.id }
