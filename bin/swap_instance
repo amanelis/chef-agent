@@ -216,7 +216,7 @@ end unless options[:configuration][:aws][:ec2][:instances].nil?
 # Proceed with instnace deregister
 options[:configuration][:aws][:ec2][:current].each do |instance|
   # Remove/Deregister instance to loadbalancer
-  puts " => Removing/Terminating #{instance.id} to #{options[:configuration][:aws][:elb].name}"
+  puts " => Removing/Terminating #{instance.id} from #{options[:configuration][:aws][:elb].name}"
   options[:configuration][:aws][:elb].instances.deregister(instance)
   
   # Terminate instance
