@@ -80,6 +80,13 @@ options[:stdout] = true
 # Test mode will turn off real AWS interaction on certain work that needs to be done.
 options[:test_mode] = false
 
+####################### VERY IMPORTANT OPTIONS ####################### 
+options[:commands] = {
+  :swap => false,
+  :register => false
+}
+####################### VERY IMPORTANT OPTIONS ####################### 
+
 # Main configuration for the nodes is specified here. 
 options[:configuration] = {
   :aws => {
@@ -266,8 +273,12 @@ OptionParser.new do |parser|
     end
   end
   
-  parser.on("-s", "--sync-output BOOLEAN", "\033[35mOptional\033[30m. Syncs stdout with console so wait progress is enabled. Default enabled.") do |setting|
-    options[:stdout] = setting
+  parser.on("-r", "--register", "\033[35mOptional\033[30m. Adds the output nodes to given elb.") do |setting|
+    options[:commands][:register] = true
+  end
+  
+  parser.on("-s", "--swap", "\033[35mOptional\033[30m. Swaps all instances in elb with new ones created.") do |setting|
+    options[:commands][:register] = true
   end
   
   parser.on("-t", "--test", "\033[35mOptional\033[30m. Enable test environment and don't do any instance work.") do |setting|
@@ -286,6 +297,12 @@ $stdout.sync = options[:stdout]
 # Start timeer
 options[:time][:main][:start] = Time.now
 
+# Must pass at least one option for elb, either --register or --swap
+# if options[:commands][:register] == false || options[:commands][:swap] == false
+#   puts "No valid '\033[22;31m-r/--register OR -s/--swap\033[30m' passed. You must choose one action to give to server."
+#   exit 1
+# end
+
 # Check for a valid build number that should have been passed to the script
 if options[:configuration][:aws][:s3][:bucket].nil? || options[:configuration][:aws][:s3][:build_number].nil? || 
    options[:configuration][:aws][:s3][:build_path].nil? || options[:configuration][:aws][:s3][:build_url].nil?
@@ -293,12 +310,13 @@ if options[:configuration][:aws][:s3][:bucket].nil? || options[:configuration][:
   exit 1
 end
 
-# Check for nil or empty instances, if they are empty, we will boot number of instances in load balancer
+# Check for nil or empty instances, if they are empty, we will boot number of instances in load balancer.
+# If there are no instances in load balancer, code will boot 1 instance to start with.
 if options[:configuration][:aws][:ec2][:instances].empty? || options[:configuration][:aws][:ec2][:instances].nil?
   # This means no servers were passed in via STDIN or cmd line arguments, lets create some based on loadbalancer
   number_of_instances = 0
   number_of_instances = options[:configuration][:aws][:elb].instances.count unless options[:configuration][:aws][:elb].instances.nil?
-  number_of_instances = 2 if number_of_instances == 0
+  number_of_instances = 1 if number_of_instances == 0
   
   puts "Calling $ bin/boot_instance -n #{number_of_instances}"
   create_instances = `./bin/boot_instance -n #{number_of_instances}`.strip
@@ -354,7 +372,7 @@ instructions = [
 # Break out Threads to work on each instance, ssh and configure using the instructions []
 puts "Running Build on all instances created..."
 options[:time][:build][:start] = Time.now
-options[:configuration][:aws][:ec2][:instances].in_parallel{ |instance| 
+options[:configuration][:aws][:ec2][:instances].collect { |instance| 
   # Tag the instances to the current env
   instance.add_tag('Name', :value => "platform-#{options[:env].to_s}-#{options[:configuration][:aws][:s3][:build_number]}")
   
@@ -410,11 +428,15 @@ options[:configuration][:aws][:ec2][:instances].in_parallel{ |instance|
 }
 
 # # Swap instances
-# if options[:configuration][:aws][:elb]
+# if options[:configuration][:aws][:elb] && options[:commands][:swap]
 #   # Swap instances on load balancer with newly created instances only if there are instances 
 #   puts "Swapping instances on loadbalancer[#{options[:configuration][:aws][:elb].name}] now..."
 #   puts "Calling $ bin/swap_instance -l #{options[:configuration][:aws][:elb].name} -i #{options[:configuration][:aws][:ec2][:instances].collect(&:id).join(',')}"
 #   swap_instances = `./bin/swap_instance -l #{options[:configuration][:aws][:elb].name} -i #{options[:configuration][:aws][:ec2][:instances].collect(&:id).join(',')}`
+# elsif options[:configuration][:aws][:elb] && options[:commands][:register]
+#   # Registering new instances
+#   puts "Registering instances on loadbalancer[#{options[:configuration][:aws][:elb].name}] now..."
+#   puts "Calling $ bin/register_instance -l #{options[:configuration][:aws][:elb].name} -i #{options[:configuration][:aws][:ec2][:instances].collect(&:id).join(',')}"
 # end
 
 options[:time][:build][:finish] = ((Time.now - options[:time][:build][:start]) / 60).round(2)
