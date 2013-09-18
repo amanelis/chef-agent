@@ -177,6 +177,7 @@ end
 
 # Check for nil or empty instances, must be present to continue and must be in AWS account to continue as well.
 if options[:configuration][:aws][:ec2][:instances].empty? || options[:configuration][:aws][:ec2][:instances].nil?
+  puts "Instances: #{options[:configuration][:aws][:ec2][:instances]}"
   puts "No valid '\033[22;31m-i OR --instances\033[37m' passed. You must pipe a list of AWS instances into this executable or pass in as a comma seperated list."
   exit 1
 else
