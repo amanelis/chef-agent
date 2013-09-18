@@ -96,7 +96,7 @@ if File.exists?(options[:configuration][:aws][:credentials_file])
   AWS.config(:access_key_id => options[:configuration][:aws][:access_key_id], :secret_access_key => options[:configuration][:aws][:secret_access_key])
 else
   puts "--------------------------------------------------------------------"
-  puts "\033[22;31mCould not find a valid credential file at #{options[:configuration][:aws][:credentials_file]}\033[37m"
+  puts "\033[22;31mCould not find a valid credential file at #{options[:configuration][:aws][:credentials_file]}\033[30m"
   puts "--------------------------------------------------------------------"
   exit 1
 end
@@ -128,7 +128,7 @@ OptionParser.new do |parser|
   parser.separator ""
   parser.separator "Specific options:"
   
-  parser.on("-i", "--instances ARRAY", Array, "\033[32mRequired\033[37m. Pass a comma seperated list of EC2 instance ids that will be booted with build. \033[31mDO NOT PUT SPACES BETWEEN IDS AND COMMAS\033[37m") do |setting|
+  parser.on("-i", "--instances ARRAY", Array, "\033[32mRequired\033[30m. Pass a comma seperated list of EC2 instance ids that will be booted with build. \033[31mDO NOT PUT SPACES BETWEEN IDS AND COMMAS\033[30m") do |setting|
     if setting.empty?
       puts "You passed an invalid list of AWS instances, please try again."
       exit 1
@@ -141,7 +141,7 @@ OptionParser.new do |parser|
     end
   end
   
-  parser.on("-l", "--loadbalancer LOAD_BALANCER", "\033[35mOptional\033[37m. Pass the load balancer (AWS NAME) the nodes will be added to.") do |setting|
+  parser.on("-l", "--loadbalancer LOAD_BALANCER", "\033[35mOptional\033[30m. Pass the load balancer (AWS NAME) the nodes will be added to.") do |setting|
     if setting.nil?
       puts "You passed in invalid argument for switch: -l | --loadbalancer, please try again."
       exit 1
@@ -149,21 +149,21 @@ OptionParser.new do |parser|
       if load_balancers.collect(&:name).include?(setting.strip)
         options[:configuration][:aws][:elb] = load_balancers[setting.strip]
       else
-        puts "Your argument (\033[35m#{setting}\033[37m) for -l | --loadbalancer was not found under the AWS account connected, please try again."
+        puts "Your argument (\033[35m#{setting}\033[30m) for -l | --loadbalancer was not found under the AWS account connected, please try again."
         exit 1
       end
     end
   end
   
-  parser.on("-s", "--sync-output BOOLEAN", "\033[35mOptional\033[37m. Syncs stdout with console so wait progress is enabled. Default enabled.") do |setting|
+  parser.on("-s", "--sync-output BOOLEAN", "\033[35mOptional\033[30m. Syncs stdout with console so wait progress is enabled. Default enabled.") do |setting|
     options[:stdout] = setting
   end
   
-  parser.on("-t", "--test", "\033[35mOptional\033[37m. Enable test environment and don't do any instance work.") do |setting|
+  parser.on("-t", "--test", "\033[35mOptional\033[30m. Enable test environment and don't do any instance work.") do |setting|
     options[:test_mode] = true
   end
 
-  parser.on_tail("-h", "--help", "--usage", "\033[36mHelp\033[37m. Show this usage message and quit.") do |setting|
+  parser.on_tail("-h", "--help", "--usage", "\033[36mHelp\033[30m. Show this usage message and quit.") do |setting|
     puts parser.help
     exit 1
   end
@@ -174,14 +174,14 @@ $stdout.sync = options[:stdout]
 
 # Check for a valid load balancer
 if options[:configuration][:aws][:elb].nil?
-  puts "No valid '\033[22;31m-l OR --loadbalancer\033[37m' passed. You must pass a valid loadbalancer."
+  puts "No valid '\033[22;31m-l OR --loadbalancer\033[30m' passed. You must pass a valid loadbalancer."
   exit 1
 end
 
 # Check for nil or empty instances, must be present to continue and must be in AWS account to continue as well.
 if options[:configuration][:aws][:ec2][:instances].empty? || options[:configuration][:aws][:ec2][:instances].nil?
   puts "Instances: #{options[:configuration][:aws][:ec2][:instances]}"
-  puts "No valid '\033[22;31m-i OR --instances\033[37m' passed. You must pipe a list of AWS instances into this executable or pass in as a comma seperated list."
+  puts "No valid '\033[22;31m-i OR --instances\033[30m' passed. You must pipe a list of AWS instances into this executable or pass in as a comma seperated list."
   exit 1
 else
   # Source instances in instance array and checks to see if instances passed via STDIN are actually in AWS account. For testing, included the --test
@@ -194,9 +194,9 @@ else
 
   # Return if no instsances are available
   if options[:configuration][:aws][:ec2][:instances].nil? || options[:configuration][:aws][:ec2][:instances].empty?
-    puts "\033[35mThe configuration set has no valid AWS instances, so it cannot continue.\033[37m"
-    puts "\033[35mCheck the AWS instance IDs that are being passed in via STDIN and be sure\033[37m"
-    puts "\033[35mthey match valid AWS IDs in the account specified by AWS credential keys.\033[37m"
+    puts "\033[35mThe configuration set has no valid AWS instances, so it cannot continue.\033[30m"
+    puts "\033[35mCheck the AWS instance IDs that are being passed in via STDIN and be sure\033[30m"
+    puts "\033[35mthey match valid AWS IDs in the account specified by AWS credential keys.\033[30m"
     exit 1
   end
 end
