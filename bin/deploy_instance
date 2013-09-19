@@ -433,6 +433,7 @@ options[:configuration][:aws][:ec2][:instances].in_parallel { |instance|
 }
 
 puts "Threads have completed work on instances, moving to register/swap..."
+puts "Instances #{options[:configuration][:aws][:ec2][:instances]}"
 
 # Swap instances
 if options[:configuration][:aws][:elb] && options[:commands][:swap] && options[:configuration][:aws][:ec2][:instances]
