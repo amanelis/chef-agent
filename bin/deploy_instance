@@ -377,7 +377,7 @@ options[:configuration][:aws][:ec2][:instances].each do |instance|
 end
 
 # Break out Threads to work on each instance, ssh and configure using the instructions []
-puts "Running Build on all instances created..."
+puts "Running Build on all instances created[#{options[:configuration][:aws][:ec2][:instances].count}]..."
 options[:time][:build][:start] = Time.now
 options[:configuration][:aws][:ec2][:instances].in_parallel { |instance| 
   
@@ -395,7 +395,7 @@ options[:configuration][:aws][:ec2][:instances].in_parallel { |instance|
   wait_count = 0
   puts "Waiting for play to start at #{instance.dns_name}, querying application every 2 seconds from Thread[#{Thread.current.object_id}]"
   while true
-    puts " -> sleeping for 2 minutes on count[#{wait_count}] from Thread[#{Thread.current.object_id}]"
+    puts " -> sleeping for 2 minutes on count[#{wait_count}] for #{instance.id} from Thread[#{Thread.current.object_id}]"
     sleep 120
     
     # Watch for Timeout
@@ -405,9 +405,9 @@ options[:configuration][:aws][:ec2][:instances].in_parallel { |instance|
       end
     rescue Timeout::Error => e
       puts "Timeout::Error => #{e}"
-      puts "Timeout on starting play for #{instance.dns_name} from Thread[#{Thread.current.object_id}]"
-      puts "Please remove instances #{options[:configuration][:aws][:ec2][:instances].collect(&:id).join(',')}"
-      exit 1
+      puts "Timeout on starting play for #{instance.dns_name} from Thread[#{Thread.current.object_id}] - terminating instance"
+      instance.terminate
+      break
     end
     
     if response == 1 || response == "1"
@@ -423,7 +423,7 @@ options[:configuration][:aws][:ec2][:instances].in_parallel { |instance|
       options[:configuration][:aws][:ec2][:instances].delete(instance)
       
       # Terminate it from AWS account
-      # instance.terminate
+      instance.terminate
       break
     end
     
@@ -435,16 +435,16 @@ options[:configuration][:aws][:ec2][:instances].in_parallel { |instance|
 puts "Threads have completed work on instances, moving to register/swap..."
 
 # Swap instances
-if options[:configuration][:aws][:elb] && options[:commands][:swap]
+if options[:configuration][:aws][:elb] && options[:commands][:swap] && options[:configuration][:aws][:ec2][:instances]
   # Swap instances on load balancer with newly created instances only if there are instances 
   puts "Swapping instances on loadbalancer[#{options[:configuration][:aws][:elb].name}] now..."
   puts "Calling $ bin/swap_instance -l #{options[:configuration][:aws][:elb].name} -i #{options[:configuration][:aws][:ec2][:instances].collect(&:id).join(',')}"
-  swap_instances = `./bin/swap_instance -l #{options[:configuration][:aws][:elb].name} -i #{options[:configuration][:aws][:ec2][:instances].collect(&:id).join(',')}`
-elsif options[:configuration][:aws][:elb] && options[:commands][:register]
+  `./bin/swap_instance -l #{options[:configuration][:aws][:elb].name} -i #{options[:configuration][:aws][:ec2][:instances].collect(&:id).join(',')}`
+elsif options[:configuration][:aws][:elb] && options[:commands][:register] && options[:configuration][:aws][:ec2][:instances]
   # Registering new instances
   puts "Registering instances on loadbalancer[#{options[:configuration][:aws][:elb].name}] now..."
   puts "Calling $ bin/register_instance -l #{options[:configuration][:aws][:elb].name} -i #{options[:configuration][:aws][:ec2][:instances].collect(&:id).join(',')}"
-  register_instances = `./bin/register_instance -l #{options[:configuration][:aws][:elb].name} -i #{options[:configuration][:aws][:ec2][:instances].collect(&:id).join(',')}`
+  `./bin/register_instance -l #{options[:configuration][:aws][:elb].name} -i #{options[:configuration][:aws][:ec2][:instances].collect(&:id).join(',')}`
 end
 
 options[:time][:build][:finish] = ((Time.now - options[:time][:build][:start]) / 60).round(2)
