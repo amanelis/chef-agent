@@ -416,8 +416,13 @@ options[:configuration][:aws][:ec2][:instances].in_parallel { |instance|
         `curl -Is http://#{instance.dns_name} | grep -c 303`.strip
       end
     rescue Timeout::Error => e
-      puts "  Worker[#{Thread.current.object_id}] => Timeout::Error #{e}"
-      puts "  Worker[#{Thread.current.object_id}] => Timeout on starting play for #{instance.dns_name} terminating instance"
+      puts "  Worker[#{Thread.current.object_id}] => \033[31mTimeout::Error #{e}\033[30m"
+      puts "  Worker[#{Thread.current.object_id}] => \033[31mTimeout on starting play for #{instance.dns_name} terminating instance\033[30m"
+      
+      # Remove instance
+      options[:configuration][:aws][:ec2][:instances].delete(instance)
+      
+      # Terminate it from AWS account
       instance.terminate
       break
     end
@@ -428,7 +433,7 @@ options[:configuration][:aws][:ec2][:instances].in_parallel { |instance|
     end
     
     if wait_count == 4
-      puts "  Worker[#{Thread.current.object_id}] => wait_count hit[#{wait_count}], waiting for play to start on #{instance.dns_name}"
+      puts "  Worker[#{Thread.current.object_id}] => \033[31mwait_count hit[#{wait_count}], waiting for play to start on #{instance.dns_name}\033[30m"
       puts "  Worker[#{Thread.current.object_id}] => \033[31mTerminating instance[#{instance.id}]\033[30m"
       
       # Remove instance
