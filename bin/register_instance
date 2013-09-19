@@ -200,8 +200,8 @@ else
 end
 
 # Add instance to elb
-options[:configuration][:aws][:ec2][:instances].in_parallel { |instance|
+options[:configuration][:aws][:ec2][:instances].each do |instance|
   # Add/Register instance to loadbalancer
   puts " => Adding #{instance.id} to #{options[:configuration][:aws][:elb].name}"
   options[:configuration][:aws][:elb].instances.register(instance)
-} unless options[:configuration][:aws][:ec2][:instances].nil?
+end unless options[:configuration][:aws][:ec2][:instances].nil?
