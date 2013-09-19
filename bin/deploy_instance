@@ -317,9 +317,17 @@ end
 if options[:configuration][:aws][:ec2][:instances].empty? || options[:configuration][:aws][:ec2][:instances].nil?
   # This means no servers were passed in via STDIN or cmd line arguments, lets create some based on loadbalancer
   number_of_instances = 0
-  number_of_instances = options[:configuration][:aws][:elb].instances.count if !options[:configuration][:aws][:elb].instances.nil? && options[:commands][:swap]
-  number_of_instances = 1 if number_of_instances == 0 || options[:commands][:register]
   
+  # If we are swaping instances, create as many as are in load balancer
+  if options[:commands][:swap]
+    number_of_instances = options[:configuration][:aws][:elb].instances.count
+  elsif options[:commands][:register]
+    number_of_instances = 1
+  else
+    number_of_instances = 2
+  end
+
+  # Call and create instance(s)
   puts "Calling $ bin/boot_instance -n #{number_of_instances}"
   create_instances = `./bin/boot_instance -n #{number_of_instances}`.strip
   
