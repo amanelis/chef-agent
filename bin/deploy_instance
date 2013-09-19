@@ -316,7 +316,7 @@ if options[:configuration][:aws][:ec2][:instances].empty? || options[:configurat
   # This means no servers were passed in via STDIN or cmd line arguments, lets create some based on loadbalancer
   number_of_instances = 0
   number_of_instances = options[:configuration][:aws][:elb].instances.count unless options[:configuration][:aws][:elb].instances.nil?
-  number_of_instances = 2 if number_of_instances == 0
+  number_of_instances = 1 if number_of_instances == 0
   
   puts "Calling $ bin/boot_instance -n #{number_of_instances}"
   create_instances = `./bin/boot_instance -n #{number_of_instances}`.strip
@@ -337,10 +337,6 @@ if options[:configuration][:aws][:ec2][:instances].empty? || options[:configurat
     next a unless ec2_instance_ids.include?(i)
     a << EC2.instances[i]
   } unless options[:test_mode]
-  
-  puts "NUM INSTANCES **********************************"
-  puts options[:configuration][:aws][:ec2][:instances].count
-  puts "NUM INSTANCES **********************************"
 else 
   # Source instances in instance array and checks to see if instances passed via STDIN are actually in AWS account. For testing, included the --test
   # flag as an cmd line argument and it won't check the account for valid instances
@@ -415,7 +411,7 @@ options[:configuration][:aws][:ec2][:instances].in_parallel { |instance|
     end
     
     if response == 1 || response == "1"
-      puts ""
+      puts " "
       break
     end
     
