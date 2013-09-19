@@ -429,7 +429,7 @@ options[:configuration][:aws][:ec2][:instances].in_parallel { |instance|
     
     if wait_count == 4
       puts "  Worker[#{Thread.current.object_id}] => wait_count hit[#{wait_count}], waiting for play to start on #{instance.dns_name}"
-      puts "  Worker[#{Thread.current.object_id}] => Terminating instance[#{instance.id}]"
+      puts "  Worker[#{Thread.current.object_id}] => \033[31mTerminating instance[#{instance.id}]\033[30m"
       
       # Remove instance
       options[:configuration][:aws][:ec2][:instances].delete(instance)
@@ -447,12 +447,12 @@ options[:configuration][:aws][:ec2][:instances].in_parallel { |instance|
 puts "\033[32mThreads have completed work on instances, moving to register/swap.\033[30m"
 
 # Swap instances
-if options[:configuration][:aws][:elb] && options[:commands][:swap] && options[:configuration][:aws][:ec2][:instances]
+if options[:configuration][:aws][:elb] && options[:commands][:swap] && (!options[:configuration][:aws][:ec2][:instances].nil? || !options[:configuration][:aws][:ec2][:instances].empty?)
   # Swap instances on load balancer with newly created instances only if there are instances 
   puts "Swapping instances on loadbalancer[#{options[:configuration][:aws][:elb].name}] now..."
   puts "Calling $ bin/swap_instance -l #{options[:configuration][:aws][:elb].name} -i #{options[:configuration][:aws][:ec2][:instances].collect(&:id).join(',')}"
   `./bin/swap_instance -l #{options[:configuration][:aws][:elb].name} -i #{options[:configuration][:aws][:ec2][:instances].collect(&:id).join(',')}`
-elsif options[:configuration][:aws][:elb] && options[:commands][:register] && options[:configuration][:aws][:ec2][:instances]
+elsif options[:configuration][:aws][:elb] && options[:commands][:register] && (!options[:configuration][:aws][:ec2][:instances].nil? || !options[:configuration][:aws][:ec2][:instances].empty?)
   # Registering new instances
   puts "Registering instances on loadbalancer[#{options[:configuration][:aws][:elb].name}] now..."
   puts "Calling $ bin/register_instance -l #{options[:configuration][:aws][:elb].name} -i #{options[:configuration][:aws][:ec2][:instances].collect(&:id).join(',')}"
