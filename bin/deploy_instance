@@ -153,9 +153,11 @@ end
 # is important, if we decided to pipe( | ) data into this script, we will need to configure
 # and store it from here.
 unless $stdin.tty?
-  # Save any STDIN input that contains or looks like an AWS instance ID => i-12345678
-  if line.strip =~ /^i-([a-zA-Z0-9]{8})$/ 
-    options[:configuration][:aws][:ec2][:instances] << line.strip 
+  $stdin.each_line do |line|
+    # Save any STDIN input that contains or looks like an AWS instance ID => i-12345678
+    if line.strip =~ /^i-([a-zA-Z0-9]{8})$/ 
+      options[:configuration][:aws][:ec2][:instances] << line.strip 
+    end
   end
   
   # Be sure all instances added are uniq
