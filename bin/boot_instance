@@ -160,7 +160,7 @@ sleep options[:configuration][:aws][:ec2][:default_sleep_second]
 # Run through instances and start SSH
 puts "Running Chef on all instances created..."
 options[:time][:chef][:start] = Time.now
-options[:configuration][:aws][:ec2][:instances].collect { |instance| 
+options[:configuration][:aws][:ec2][:instances].in_parallel { |instance| 
   puts "SSH into #{instance.dns_name} from Thread[#{Thread.current.object_id}]"
   Net::SSH.start(instance.dns_name, 'ec2-user') do |session|
     puts " => running Chef on #{instance.id} from Thread[#{Thread.current.object_id}]"

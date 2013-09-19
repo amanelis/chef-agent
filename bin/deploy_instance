@@ -337,6 +337,10 @@ if options[:configuration][:aws][:ec2][:instances].empty? || options[:configurat
     next a unless ec2_instance_ids.include?(i)
     a << EC2.instances[i]
   } unless options[:test_mode]
+  
+  puts "NUM INSTANCES **********************************"
+  puts options[:configuration][:aws][:ec2][:instances].count
+  puts "NUM INSTANCES **********************************"
 else 
   # Source instances in instance array and checks to see if instances passed via STDIN are actually in AWS account. For testing, included the --test
   # flag as an cmd line argument and it won't check the account for valid instances
