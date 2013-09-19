@@ -79,6 +79,9 @@ options[:configuration] = {
   }
 }
 
+# Sync standard out
+$stdout.sync = options[:stdout]
+
 # First check and see if keys exist to make a valid AWS connection. It will exit here
 # if no keys are found and/or if authentication fails.
 if File.exists?(options[:configuration][:aws][:credentials_file]) 
@@ -111,6 +114,9 @@ unless $stdin.tty?
       options[:configuration][:aws][:ec2][:instances] << line.strip 
     end
   end
+  
+  # Be sure all instances added are uniq
+  options[:configuration][:aws][:ec2][:instances] = options[:configuration][:aws][:ec2][:instances].uniq
 end
 
 # Build a few objets we will need in OptionParser and throughout the script.
@@ -154,10 +160,6 @@ OptionParser.new do |parser|
     end
   end
   
-  parser.on("-s", "--sync-output BOOLEAN", "\033[35mOptional\033[30m. Syncs stdout with console so wait progress is enabled. Default enabled.") do |setting|
-    options[:stdout] = setting
-  end
-  
   parser.on("-t", "--test", "\033[35mOptional\033[30m. Enable test environment and don't do any instance work.") do |setting|
     options[:test_mode] = true
   end
@@ -167,9 +169,6 @@ OptionParser.new do |parser|
     exit 1
   end
 end.parse!(ARGV)
-
-# Sync standard out
-$stdout.sync = options[:stdout]
 
 # Check for a valid load balancer
 if options[:configuration][:aws][:elb].nil?
@@ -185,14 +184,16 @@ if options[:configuration][:aws][:ec2][:instances].empty? || options[:configurat
 else
   # Source instances in instance array and checks to see if instances passed via STDIN are actually in AWS account. For testing, included the --test
   # flag as an cmd line argument and it won't check the account for valid instances
-  ec2_instance_ids = ec2_instances.collect(&:id)
-  options[:configuration][:aws][:ec2][:instances] = options[:configuration][:aws][:ec2][:instances].inject([]) { |a, i|
-    next a unless ec2_instance_ids.include?(i)
-    a << EC2.instances[i]
-  } unless options[:test_mode]
-
-  # Return if no instsances are available
+  unless options[:test_mode]
+    ec2_instance_ids = ec2_instances.collect(&:id)
+    options[:configuration][:aws][:ec2][:instances] = options[:configuration][:aws][:ec2][:instances].inject([]) { |a, i|
+      next a unless ec2_instance_ids.include?(i)
+      a << EC2.instances[i]
+    }
+  end
+  
   if options[:configuration][:aws][:ec2][:instances].nil? || options[:configuration][:aws][:ec2][:instances].empty?
+    puts "\033[35mAWS Instances: #{options[:configuration][:aws][:ec2][:instances].count}\033[30m"
     puts "\033[35mThe configuration set has no valid AWS instances, so it cannot continue.\033[30m"
     puts "\033[35mCheck the AWS instance IDs that are being passed in via STDIN and be sure\033[30m"
     puts "\033[35mthey match valid AWS IDs in the account specified by AWS credential keys.\033[30m"

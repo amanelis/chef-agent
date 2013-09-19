@@ -124,6 +124,9 @@ options[:time] = {
   }
 }
 
+# Sync standard out
+$stdout.sync = options[:stdout]
+
 # First check and see if keys exist to make a valid AWS connection. It will exit here
 # if no keys are found and/or if authentication fails.
 if File.exists?(options[:configuration][:aws][:credentials_file]) 
@@ -150,9 +153,9 @@ end
 # is important, if we decided to pipe( | ) data into this script, we will need to configure
 # and store it from here.
 unless $stdin.tty?
-  $stdin.each_line do |line|
-    # Save any STDIN input that contains or looks like an AWS instance ID => i-12345678
-    options[:configuration][:aws][:ec2][:instances] << line.strip if line.strip =~ /^i-([a-zA-Z0-9]{8})$/ 
+  # Save any STDIN input that contains or looks like an AWS instance ID => i-12345678
+  if line.strip =~ /^i-([a-zA-Z0-9]{8})$/ 
+    options[:configuration][:aws][:ec2][:instances] << line.strip 
   end
   
   # Be sure all instances added are uniq
@@ -169,7 +172,7 @@ load_balancers = ELB.load_balancers
 ec2_instances  = EC2.instances
 
 OptionParser.new do |parser|
-  parser.banner = "USAGE: boot_instance [options]"
+  parser.banner = "USAGE: deploy_instance [options]"
   parser.separator ""
   parser.separator "Specific options:"
   
@@ -291,22 +294,19 @@ OptionParser.new do |parser|
   end
 end.parse!(ARGV)
 
-# Sync standard out
-$stdout.sync = options[:stdout]
-
 # Start timeer
 options[:time][:main][:start] = Time.now
 
 # Must pass at least one option for elb, either --register or --swap
 if options[:commands][:register] == false && options[:commands][:swap] == false
-  puts "No valid '\033[22;31m-r/--register OR -s/--swap\033[30m' passed. You must choose one action to give to server."
+  puts "No valid '\033[22;31m-r/--register OR -s/--swap\033[30m' passed. You must choose one action to run against the new instances created."
   exit 1
 end
 
 # Check for a valid build number that should have been passed to the script
 if options[:configuration][:aws][:s3][:bucket].nil? || options[:configuration][:aws][:s3][:build_number].nil? || 
    options[:configuration][:aws][:s3][:build_path].nil? || options[:configuration][:aws][:s3][:build_url].nil?
-  puts "No valid '\033[22;31m-b OR --buildurl\033[30m' passed. You must pass the S3 buildurl to the build you want installed on the servers."
+  puts "No valid '\033[22;31m-b OR --buildurl\033[30m' passed. If you have passed a build url, that it might be of incorrect format."
   exit 1
 end
 
@@ -315,8 +315,8 @@ end
 if options[:configuration][:aws][:ec2][:instances].empty? || options[:configuration][:aws][:ec2][:instances].nil?
   # This means no servers were passed in via STDIN or cmd line arguments, lets create some based on loadbalancer
   number_of_instances = 0
-  number_of_instances = options[:configuration][:aws][:elb].instances.count unless options[:configuration][:aws][:elb].instances.nil?
-  number_of_instances = 1 if number_of_instances == 0
+  number_of_instances = options[:configuration][:aws][:elb].instances.count if !options[:configuration][:aws][:elb].instances.nil? && options[:commands][:swap]
+  number_of_instances = 1 if number_of_instances == 0 || options[:commands][:register]
   
   puts "Calling $ bin/boot_instance -n #{number_of_instances}"
   create_instances = `./bin/boot_instance -n #{number_of_instances}`.strip
@@ -332,21 +332,26 @@ if options[:configuration][:aws][:ec2][:instances].empty? || options[:configurat
   end
   
   # Now source the real instance IDs and replace string IDs with real AWS instances
-  ec2_instance_ids = ec2_instances.collect(&:id) unless options[:test_mode]
-  options[:configuration][:aws][:ec2][:instances] = options[:configuration][:aws][:ec2][:instances].inject([]) { |a, i|
-    next a unless ec2_instance_ids.include?(i)
-    a << EC2.instances[i]
-  } unless options[:test_mode]
+  unless options[:test_mode]
+    ec2_instance_ids = ec2_instances.collect(&:id) 
+    options[:configuration][:aws][:ec2][:instances] = options[:configuration][:aws][:ec2][:instances].inject([]) { |a, i|
+      next a unless ec2_instance_ids.include?(i)
+      a << EC2.instances[i]
+    }
+  end
 else 
   # Source instances in instance array and checks to see if instances passed via STDIN are actually in AWS account. For testing, included the --test
   # flag as an cmd line argument and it won't check the account for valid instances
-  ec2_instance_ids = ec2_instances.collect(&:id)
-  options[:configuration][:aws][:ec2][:instances] = options[:configuration][:aws][:ec2][:instances].inject([]) { |a, i|
-    next a unless ec2_instance_ids.include?(i)
-    a << EC2.instances[i]
-  } unless options[:test_mode]
+  unless options[:test_mode]
+    ec2_instance_ids = ec2_instances.collect(&:id)
+    options[:configuration][:aws][:ec2][:instances] = options[:configuration][:aws][:ec2][:instances].inject([]) { |a, i|
+      next a unless ec2_instance_ids.include?(i)
+      a << EC2.instances[i]
+    }
+  end
   
   if options[:configuration][:aws][:ec2][:instances].nil? || options[:configuration][:aws][:ec2][:instances].empty?
+    puts "\033[35mAWS Instances: #{options[:configuration][:aws][:ec2][:instances].count}\033[30m"
     puts "\033[35mThe configuration set has no valid AWS instances, so it cannot continue.\033[30m"
     puts "\033[35mCheck the AWS instance IDs that are being passed in via STDIN and be sure\033[30m"
     puts "\033[35mthey match valid AWS IDs in the account specified by AWS credential keys.\033[30m"
@@ -369,18 +374,15 @@ instructions = [
   "/usr/bin/sudo start platform EMAIL_ALERT_FREQUENCY=0"
 ]
 
-# Add tags
+# Add tags to all newly created instances
 options[:configuration][:aws][:ec2][:instances].each do |instance|
-  puts "Adding tag to instance #{instance.id}"
   # Tag the instances to the current env
   instance.add_tag('Name', :value => "platform-#{options[:env].to_s}-#{options[:configuration][:aws][:s3][:build_number]}")
 end
 
 # Break out Threads to work on each instance, ssh and configure using the instructions []
-puts "Running Build on all instances created[#{options[:configuration][:aws][:ec2][:instances].count}]..."
 options[:time][:build][:start] = Time.now
 options[:configuration][:aws][:ec2][:instances].in_parallel { |instance| 
-  
   # Do the work via SSH
   puts "SSH into #{instance.dns_name} from Thread[#{Thread.current.object_id}]"
   Net::SSH.start(instance.dns_name, 'play') do |session|
@@ -432,8 +434,7 @@ options[:configuration][:aws][:ec2][:instances].in_parallel { |instance|
   end
 }
 
-puts "Threads have completed work on instances, moving to register/swap..."
-puts "Instances #{options[:configuration][:aws][:ec2][:instances]}"
+puts "\033[32mThreads have completed work on instances, moving to register/swap.\033[30m"
 
 # Swap instances
 if options[:configuration][:aws][:elb] && options[:commands][:swap] && options[:configuration][:aws][:ec2][:instances]

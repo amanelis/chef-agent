@@ -86,6 +86,9 @@ options[:time] = {
   }
 }
 
+# Sync standard out
+$stdout.sync = options[:stdout]
+
 # First check and see if keys exist
 if File.exists?(options[:configuration][:aws][:credentials_file]) 
   credentials = YAML::load(File.open(options[:configuration][:aws][:credentials_file], 'r'))
@@ -108,25 +111,21 @@ else
 end
 
 OptionParser.new do |parser|
-  parser.banner = "USAGE: boot_base_instance [options]"
+  parser.banner = "USAGE: boot_instance [options]"
   parser.separator ""
   parser.separator "Specific options:"
 
-  parser.on("-n", "--number-of-nodes INTEGER", "Pass the number of servers to boot up and run Chef on.") do |setting|
+  parser.on("-n", "--nodes INTEGER", "Pass the number of servers to boot up and run Chef on.") do |setting|
     begin
       setting = Integer(setting)
     rescue ArgumentError => e
       puts "--------------------------------------------------------------------"
-      puts "\033[22;31mInvalid input, please give an integer only.#{options[:configuration][:aws][:credentials_file]}\033[30m"
+      puts "\033[22;31mInvalid input, please give an integer only for -n/--nodes switch.#{options[:configuration][:aws][:credentials_file]}\033[30m"
       puts "--------------------------------------------------------------------"
       exit 1
     end
     
     options[:configuration][:aws][:ec2][:instance_count] = setting
-  end
-  
-  parser.on("-s", "--sync-output BOOLEAN", "Syncs stdout with console so wait progress is enabled. Default enabled.") do |setting|
-    options[:stdout] = setting
   end
 
   parser.on_tail("-h", "--help", "--usage", "Show this usage message and quit.") do |setting|
@@ -135,15 +134,13 @@ OptionParser.new do |parser|
   end
 end.parse!(ARGV)
 
-# Sync standard out
-$stdout.sync = options[:stdout]
-
 # Start timeer
 options[:time][:main][:start] = Time.now
 
 # Create a few instances to communicate with AWS
 EC2 = AWS::EC2.new
-S3  = AWS::S3.new
+ELB = AWS::ELB.new
+AS3 = AWS::S3.new
 
 # Iterate for x times to create number of instances
 puts "Booting #{options[:configuration][:aws][:ec2][:instance_count]} AWS instance(s)..."
