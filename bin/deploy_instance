@@ -369,12 +369,17 @@ instructions = [
   "/usr/bin/sudo start platform EMAIL_ALERT_FREQUENCY=0"
 ]
 
+# Add tags
+options[:configuration][:aws][:ec2][:instances].each do |instance|
+  puts "Adding tag to instance #{instance.id}"
+  # Tag the instances to the current env
+  instance.add_tag('Name', :value => "platform-#{options[:env].to_s}-#{options[:configuration][:aws][:s3][:build_number]}")
+end
+
 # Break out Threads to work on each instance, ssh and configure using the instructions []
 puts "Running Build on all instances created..."
 options[:time][:build][:start] = Time.now
-options[:configuration][:aws][:ec2][:instances].collect { |instance| 
-  # Tag the instances to the current env
-  instance.add_tag('Name', :value => "platform-#{options[:env].to_s}-#{options[:configuration][:aws][:s3][:build_number]}")
+options[:configuration][:aws][:ec2][:instances].in_parallel { |instance| 
   
   # Do the work via SSH
   puts "SSH into #{instance.dns_name} from Thread[#{Thread.current.object_id}]"
@@ -410,7 +415,7 @@ options[:configuration][:aws][:ec2][:instances].collect { |instance|
       break
     end
     
-    if wait_count == 3
+    if wait_count == 4
       puts "Wait_count hit[#{wait_count}] starting play for #{instance.dns_name} from Thread[#{Thread.current.object_id}]"
       puts "Terminating instance[#{instance.id}]"
       
@@ -418,7 +423,7 @@ options[:configuration][:aws][:ec2][:instances].collect { |instance|
       options[:configuration][:aws][:ec2][:instances].delete(instance)
       
       # Terminate it from AWS account
-      instance.terminate
+      # instance.terminate
       break
     end
     
@@ -439,6 +444,7 @@ elsif options[:configuration][:aws][:elb] && options[:commands][:register]
   # Registering new instances
   puts "Registering instances on loadbalancer[#{options[:configuration][:aws][:elb].name}] now..."
   puts "Calling $ bin/register_instance -l #{options[:configuration][:aws][:elb].name} -i #{options[:configuration][:aws][:ec2][:instances].collect(&:id).join(',')}"
+  register_instances = `./bin/register_instance -l #{options[:configuration][:aws][:elb].name} -i #{options[:configuration][:aws][:ec2][:instances].collect(&:id).join(',')}`
 end
 
 options[:time][:build][:finish] = ((Time.now - options[:time][:build][:start]) / 60).round(2)
