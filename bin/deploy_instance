@@ -432,7 +432,7 @@ options[:configuration][:aws][:ec2][:instances].in_parallel { |instance|
     end
     
     if response == 1 || response == "1"
-      puts " Worker[#{Thread.current.object_id}] => Instance[#{instance.id}] has booted \033[32msuccessfully\033[30m - thread/worker complete"
+      puts "  Worker[#{Thread.current.object_id}] => Instance[#{instance.id}] has booted \033[32msuccessfully\033[30m - thread/worker complete"
       break
     end
     
