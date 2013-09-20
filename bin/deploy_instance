@@ -389,7 +389,7 @@ instance_tag_counter = 1
 options[:configuration][:aws][:ec2][:instances].each do |instance|
   # Tag the instances to the current env
   AWS.memoize do
-    instance.add_tag('Name', :value => "platform-#{options[:env].to_s}-#{instance_tag_counter}-#{options[:configuration][:aws][:s3][:build_number]}")
+    instance.add_tag('Name', :value => "platform-#{options[:env].to_s}-#{options[:configuration][:aws][:s3][:build_number]}-#{instance_tag_counter}")
   end
   instance_tag_counter += 1
 end
