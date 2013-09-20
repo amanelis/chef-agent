@@ -453,10 +453,9 @@ options[:configuration][:aws][:ec2][:instances].in_parallel { |instance|
   end
 }
 options[:time][:build][:finish] = ((Time.now - options[:time][:build][:start]) / 60).round(2)
-
 puts "\033[32mThreads have completed work on instances, moving to register/swap.\033[30m"
 
-# Swap instances
+# Depending on which swith was passed (--register, --swap) will determine what action is done to instances.
 if options[:configuration][:aws][:elb] && options[:commands][:swap] && (!options[:configuration][:aws][:ec2][:instances].nil? || !options[:configuration][:aws][:ec2][:instances].empty?)
   # Swap instances on load balancer with newly created instances only if there are instances 
   puts "Swapping instances on loadbalancer[#{options[:configuration][:aws][:elb].name}] now..."
@@ -470,7 +469,6 @@ elsif options[:configuration][:aws][:elb] && options[:commands][:register] && (!
 end
 
 options[:time][:main][:finish]  = ((Time.now - options[:time][:main][:start]) / 60).round(2)
-
 puts options[:configuration][:aws][:ec2][:instances].collect { |i| i.id }
 puts "Completed[Build] in #{options[:time][:build][:finish]} minutes."
 puts "Completed[Main] in #{options[:time][:main][:finish]} minutes."
