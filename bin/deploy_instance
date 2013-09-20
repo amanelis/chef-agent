@@ -428,7 +428,7 @@ options[:configuration][:aws][:ec2][:instances].in_parallel { |instance|
       
       # Terminate it from AWS account
       instance.terminate
-      break
+      exit 1
     end
     
     if response == 1 || response == "1"
@@ -445,7 +445,7 @@ options[:configuration][:aws][:ec2][:instances].in_parallel { |instance|
       
       # Terminate it from AWS account
       instance.terminate
-      break
+      exit 1
     end
     
     # Increment wait_count
@@ -457,12 +457,12 @@ puts "\033[32mThreads have completed work on instances, moving to register/swap.
 puts "Instances: #{options[:configuration][:aws][:ec2][:instances].collect(&:id)}"
 
 # Depending on which swith was passed (--register, --swap) will determine what action is done to instances.
-if options[:configuration][:aws][:elb] && options[:commands][:swap] && (!options[:configuration][:aws][:ec2][:instances].nil? || !options[:configuration][:aws][:ec2][:instances].empty?)
+if options[:configuration][:aws][:elb] && options[:commands][:swap] && (options[:configuration][:aws][:ec2][:instances] != [])
   # Swap instances on load balancer with newly created instances only if there are instances 
   puts "Swapping instances on loadbalancer[#{options[:configuration][:aws][:elb].name}] now..."
   puts "Calling $ bin/swap_instance -l #{options[:configuration][:aws][:elb].name} -i #{options[:configuration][:aws][:ec2][:instances].collect(&:id).join(',')}"
   `./bin/swap_instance -l #{options[:configuration][:aws][:elb].name} -i #{options[:configuration][:aws][:ec2][:instances].collect(&:id).join(',')}`
-elsif options[:configuration][:aws][:elb] && options[:commands][:register] && (!options[:configuration][:aws][:ec2][:instances].nil? || !options[:configuration][:aws][:ec2][:instances].empty?)
+elsif options[:configuration][:aws][:elb] && options[:commands][:register] && (options[:configuration][:aws][:ec2][:instances] != [])
   # Registering new instances
   puts "Registering instances on loadbalancer[#{options[:configuration][:aws][:elb].name}] now..."
   puts "Calling $ bin/register_instance -l #{options[:configuration][:aws][:elb].name} -i #{options[:configuration][:aws][:ec2][:instances].collect(&:id).join(',')}"
