@@ -452,6 +452,7 @@ options[:configuration][:aws][:ec2][:instances].in_parallel { |instance|
     wait_count +=1
   end
 }
+options[:time][:build][:finish] = ((Time.now - options[:time][:build][:start]) / 60).round(2)
 
 puts "\033[32mThreads have completed work on instances, moving to register/swap.\033[30m"
 
@@ -468,7 +469,6 @@ elsif options[:configuration][:aws][:elb] && options[:commands][:register] && (!
   `./bin/register_instance -l #{options[:configuration][:aws][:elb].name} -i #{options[:configuration][:aws][:ec2][:instances].collect(&:id).join(',')}`
 end
 
-options[:time][:build][:finish] = ((Time.now - options[:time][:build][:start]) / 60).round(2)
 options[:time][:main][:finish]  = ((Time.now - options[:time][:main][:start]) / 60).round(2)
 
 puts options[:configuration][:aws][:ec2][:instances].collect { |i| i.id }
