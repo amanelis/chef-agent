@@ -424,9 +424,9 @@ options[:configuration][:aws][:ec2][:instances].in_parallel { |instance|
       puts "  Worker[#{Thread.current.object_id}] => \033[31mTimeout on starting play for #{instance.dns_name} terminating instances\033[30m"
       
       # Remove and terminate the instances, then exit
-      options[:configuration][:aws][:ec2][:instances].collect(&:terminate)
-      options[:configuration][:aws][:ec2][:instances] = []
-      exit 1
+      # options[:configuration][:aws][:ec2][:instances].collect(&:terminate)
+      # options[:configuration][:aws][:ec2][:instances] = []
+      # exit 1
     end
     
     if response == 1 || response == "1"
@@ -439,9 +439,9 @@ options[:configuration][:aws][:ec2][:instances].in_parallel { |instance|
       puts "  Worker[#{Thread.current.object_id}] => \033[31mTerminating all instances\033[30m"
       
       # Remove and terminate the instances, then exit
-      options[:configuration][:aws][:ec2][:instances].collect(&:terminate)
-      options[:configuration][:aws][:ec2][:instances] = []
-      exit 1
+      # options[:configuration][:aws][:ec2][:instances].collect(&:terminate)
+      # options[:configuration][:aws][:ec2][:instances] = []
+      # exit 1
     end
     
     # Increment wait_count
