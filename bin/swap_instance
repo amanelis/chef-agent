@@ -52,6 +52,9 @@ require 'yaml'
 require 'aws-sdk'
 require 'net/ssh'
 
+# Require any class dependencies we have written.
+require 'bin/pipeline'
+
 # Options hash will contain all preset data for doing a valid deploy. Reference here for
 # environment variables and any variable used throughout the provision/deployment.
 options = {}
@@ -227,16 +230,10 @@ options[:configuration][:aws][:ec2][:current].each do |instance|
   options[:configuration][:aws][:elb].instances.deregister(instance) unless options[:test_mode]
   
   # Do not let papertrail instances stay around, unregister them 
-  instance_private_ip_address = instance.private_ip_address
-  papertrail_instance_id = "ip-" + instance_private_ip_address.gsub('.','-')
-  begin 
-    puts "Papertrail clean up, deregistering instance..."
-    response = Timeout.timeout(10) do
-      `curl -i -H "X-Papertrail-Token: #{options[:configuration][:papertrail][:token]}" -X DELETE "https://papertrailapp.com/api/v1/systems/#{papertrail_instance_id}.json"`
-    end
-  rescue Timeout::Error => e
-    puts "Timeout Error: deregister on papertrail."
-  end
+  puts "Deregistering papertrail instance..."
+  papertrail_instance_id  = Pipeline::Utility::PaperTrail.generate_papertrail_id instance.private_ip_address
+  deregister_response     = Pipeline::Utility::PaperTrail.deregister papertrail_instance_id
+  puts deregister_response ? " -> deregistered papertrail instance." : " -> failed to deregister papertrail instance."
   
   # Terminate instance
   instance.terminate unless options[:test_mode]

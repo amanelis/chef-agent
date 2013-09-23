@@ -52,6 +52,9 @@ require 'yaml'
 require 'aws-sdk'
 require 'net/ssh'
 
+# Require any class dependencies we have written.
+require 'bin/pipeline'
+
 # Options hash will contain all preset data for doing a valid deploy. Reference here for
 # environment variables and any variable used throughout the provision/deployment.
 options = {}
