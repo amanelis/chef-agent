@@ -70,12 +70,15 @@ options[:configuration] = {
   :aws => {
     :access_key_id => nil,
     :secret_access_key => nil,
-    :credentials_file => '/private/signifyd/aws/aws-credentials.yml',
+    :credentials_file => '/private/signifyd/aws/credentials.yml',
     :elb => nil,
     :ec2 => {
       :current   => [],
       :instances => []
     }
+  },
+  :papertrail => {
+    :token => nil
   }
 }
 
@@ -94,6 +97,7 @@ if File.exists?(options[:configuration][:aws][:credentials_file])
   
   options[:configuration][:aws][:access_key_id]     = credentials['aws']['access_key_id']
   options[:configuration][:aws][:secret_access_key] = credentials['aws']['secret_access_key']
+  options[:configuration][:papertrail][:token]      = credentials['papertrail']['token']
   
   # Configure AWS
   AWS.config(:access_key_id => options[:configuration][:aws][:access_key_id], :secret_access_key => options[:configuration][:aws][:secret_access_key])
@@ -220,7 +224,19 @@ end unless options[:configuration][:aws][:ec2][:instances].nil?
 options[:configuration][:aws][:ec2][:current].each do |instance|
   # Remove/Deregister instance to loadbalancer
   puts " => Removing/Terminating #{instance.id} from #{options[:configuration][:aws][:elb].name}"
-  options[:configuration][:aws][:elb].instances.deregister(instance)
+  options[:configuration][:aws][:elb].instances.deregister(instance) unless options[:test_mode]
+  
+  # Do not let papertrail instances stay around, unregister them 
+  instance_private_ip_address = instance.private_ip_address
+  papertrail_instance_id = "ip-" + instance_private_ip_address.gsub('.','-')
+  begin 
+    puts "Papertrail clean up, deregistering instance..."
+    response = Timeout.timeout(10) do
+      `curl -i -H "X-Papertrail-Token: #{options[:configuration][:papertrail][:token]}" -X DELETE "https://papertrailapp.com/api/v1/systems/#{papertrail_instance_id}.json"`
+    end
+  rescue Timeout::Error => e
+    puts "Timeout Error: deregister on papertrail."
+  end
   
   # Terminate instance
   instance.terminate unless options[:test_mode]

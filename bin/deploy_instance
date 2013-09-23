@@ -92,7 +92,7 @@ options[:configuration] = {
   :aws => {
     :access_key_id => nil,
     :secret_access_key => nil,
-    :credentials_file => '/private/signifyd/aws/aws-credentials.yml',
+    :credentials_file => '/private/signifyd/aws/credentials.yml',
     :elb => nil,
     :ec2 => {
       :current   => [],
@@ -423,10 +423,22 @@ options[:configuration][:aws][:ec2][:instances].in_parallel { |instance|
       puts "  Worker[#{Thread.current.object_id}] => \033[31mTimeout::Error #{e}\033[30m"
       puts "  Worker[#{Thread.current.object_id}] => \033[31mTimeout on starting play for #{instance.dns_name} terminating instances\033[30m"
       
+      # Do not let papertrail instances stay around, unregister them 
+      instance_private_ip_address = instance.private_ip_address
+      papertrail_instance_id = "ip-" + instance_private_ip_address.gsub('.','-')
+      begin 
+        puts "Papertrail clean up, deregistering instance..."
+        response = Timeout.timeout(10) do
+          `curl -i -H "X-Papertrail-Token: #{options[:configuration][:papertrail][:token]}" -X DELETE "https://papertrailapp.com/api/v1/systems/#{papertrail_instance_id}.json"`
+        end
+      rescue Timeout::Error => e
+        puts "Timeout Error: deregister on papertrail."
+      end
+      
       # Remove and terminate the instances, then exit
-      # options[:configuration][:aws][:ec2][:instances].collect(&:terminate)
-      # options[:configuration][:aws][:ec2][:instances] = []
-      # exit 1
+      options[:configuration][:aws][:ec2][:instances].collect(&:terminate)
+      options[:configuration][:aws][:ec2][:instances] = []
+      exit 1
     end
     
     if response == 1 || response == "1"
@@ -438,10 +450,22 @@ options[:configuration][:aws][:ec2][:instances].in_parallel { |instance|
       puts "  Worker[#{Thread.current.object_id}] => \033[31mwait_count hit[#{wait_count}], waiting for play to start on #{instance.dns_name}\033[30m"
       puts "  Worker[#{Thread.current.object_id}] => \033[31mTerminating all instances\033[30m"
       
+      # Do not let papertrail instances stay around, unregister them 
+      instance_private_ip_address = instance.private_ip_address
+      papertrail_instance_id = "ip-" + instance_private_ip_address.gsub('.','-')
+      begin 
+        puts "Papertrail clean up, deregistering instance..."
+        response = Timeout.timeout(10) do
+          `curl -i -H "X-Papertrail-Token: #{options[:configuration][:papertrail][:token]}" -X DELETE "https://papertrailapp.com/api/v1/systems/#{papertrail_instance_id}.json"`
+        end
+      rescue Timeout::Error => e
+        puts "Timeout Error: deregister on papertrail."
+      end
+      
       # Remove and terminate the instances, then exit
-      # options[:configuration][:aws][:ec2][:instances].collect(&:terminate)
-      # options[:configuration][:aws][:ec2][:instances] = []
-      # exit 1
+      options[:configuration][:aws][:ec2][:instances].collect(&:terminate)
+      options[:configuration][:aws][:ec2][:instances] = []
+      exit 1
     end
     
     # Increment wait_count
