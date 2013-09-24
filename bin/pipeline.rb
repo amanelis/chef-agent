@@ -45,7 +45,7 @@ module Pipeline
           return false if id.nil? || token.nil?
           begin 
             response = Timeout.timeout(10) do
-              `curl -i -H "X-Papertrail-Token: #{token}" -X DELETE "https://papertrailapp.com/api/v1/systems/#{papertrail_instance_id}.json" | grep -c 200`.strip
+              `curl -i -H "X-Papertrail-Token: #{token}" -X DELETE "https://papertrailapp.com/api/v1/systems/#{id}.json" | grep -c 200`.strip
             end
           rescue Timeout::Error => e
             puts "Timeout Error: deregister on papertrail => #{e}"
