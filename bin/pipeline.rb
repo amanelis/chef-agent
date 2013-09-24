@@ -1,4 +1,6 @@
 # Module namespace for deployment
+# Examples:
+#   Pipeline::Utility::PaperTrail.generate_papertrail_id "10.43.45.21"
 module Pipeline
   module ClassMethods
     def logger=(logger)
