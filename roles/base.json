@@ -1,24 +1,24 @@
 {
 	"name": "Platform Base server",
 	"run_list" : [
-		// Setsup up Monit, don't have a config file yet
-		"recipe[monit]",
-		
-		// Install any rubygem dependencies here
-		"recipe[platform::rubygems]",
+    // Setsup up Monit, don't have a config file yet
+    "recipe[monit]",
 
-		// Setsup and manages users
-		"recipe[users]",
-		"recipe[user]",
+    // Install any rubygem dependencies here
+    "recipe[platform::rubygems]",
 
-		// https://github.com/hipsnip-cookbooks/papertrail-rsyslog
-		"recipe[papertrail-rsyslog]",
-		"recipe[papertrail-rsyslog::log_files]",
+    // Setsup and manages users
+    "recipe[users]",
+    "recipe[user]",
 
-		// https://github.com/escapestudios/chef-newrelic
-		"recipe[newrelic]",
+    // https://github.com/hipsnip-cookbooks/papertrail-rsyslog
+    "recipe[papertrail-rsyslog]",
+    "recipe[papertrail-rsyslog::log_files]",
 
-		// Base Platform setup, just create directories
-		"recipe[platform::base]"
+    // https://github.com/escapestudios/chef-newrelic
+    "recipe[newrelic]",
+
+    // Base Platform setup, just create directories
+    "recipe[platform::base]"
 	]
 }
