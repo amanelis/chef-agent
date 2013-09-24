@@ -231,8 +231,8 @@ options[:configuration][:aws][:ec2][:current].each do |instance|
   
   # Do not let papertrail instances stay around, unregister them 
   puts "Deregistering papertrail instance..."
-  papertrail_instance_id  = Pipeline::Utility::PaperTrail.generate_papertrail_id instance.private_ip_address
-  deregister_response     = Pipeline::Utility::PaperTrail.deregister papertrail_instance_id
+  papertrail_instance_id  = Pipeline::Utility::PaperTrail.generate_papertrail_id(instance.private_ip_address)
+  deregister_response     = Pipeline::Utility::PaperTrail.deregister!(papertrail_instance_id, options[:configuration][:papertrail][:token])
   puts deregister_response ? " -> deregistered papertrail instance." : " -> failed to deregister papertrail instance."
   
   # Terminate instance
