@@ -108,6 +108,9 @@ options[:configuration] = {
       :build_url    => nil
     }
   },
+  :papertrail => {
+    :token => nil
+  },
   :play => {
     :build_hash       => {},
     :build_directory  => nil,
@@ -142,6 +145,7 @@ if File.exists?(options[:configuration][:aws][:credentials_file])
   
   options[:configuration][:aws][:access_key_id]     = credentials['aws']['access_key_id']
   options[:configuration][:aws][:secret_access_key] = credentials['aws']['secret_access_key']
+  options[:configuration][:papertrail][:token]      = credentials['papertrail']['token']
   
   # Configure AWS
   AWS.config(:access_key_id => options[:configuration][:aws][:access_key_id], :secret_access_key => options[:configuration][:aws][:secret_access_key])
@@ -427,16 +431,8 @@ options[:configuration][:aws][:ec2][:instances].in_parallel { |instance|
       puts "  Worker[#{Thread.current.object_id}] => \033[31mTimeout on starting play for #{instance.dns_name} terminating instances\033[30m"
       
       # Do not let papertrail instances stay around, unregister them 
-      instance_private_ip_address = instance.private_ip_address
-      papertrail_instance_id = "ip-" + instance_private_ip_address.gsub('.','-')
-      begin 
-        puts "Papertrail clean up, deregistering instance..."
-        response = Timeout.timeout(10) do
-          `curl -i -H "X-Papertrail-Token: #{options[:configuration][:papertrail][:token]}" -X DELETE "https://papertrailapp.com/api/v1/systems/#{papertrail_instance_id}.json"`
-        end
-      rescue Timeout::Error => e
-        puts "Timeout Error: deregister on papertrail."
-      end
+      papertrail_instance_id  = Pipeline::Utility::PaperTrail.generate_papertrail_id(instance.private_ip_address)
+      deregister_response     = Pipeline::Utility::PaperTrail.deregister!(papertrail_instance_id, options[:configuration][:papertrail][:token])
       
       # Remove and terminate the instances, then exit
       options[:configuration][:aws][:ec2][:instances].collect(&:terminate)
@@ -454,16 +450,8 @@ options[:configuration][:aws][:ec2][:instances].in_parallel { |instance|
       puts "  Worker[#{Thread.current.object_id}] => \033[31mTerminating all instances\033[30m"
       
       # Do not let papertrail instances stay around, unregister them 
-      instance_private_ip_address = instance.private_ip_address
-      papertrail_instance_id = "ip-" + instance_private_ip_address.gsub('.','-')
-      begin 
-        puts "Papertrail clean up, deregistering instance..."
-        response = Timeout.timeout(10) do
-          `curl -i -H "X-Papertrail-Token: #{options[:configuration][:papertrail][:token]}" -X DELETE "https://papertrailapp.com/api/v1/systems/#{papertrail_instance_id}.json"`
-        end
-      rescue Timeout::Error => e
-        puts "Timeout Error: deregister on papertrail."
-      end
+      papertrail_instance_id  = Pipeline::Utility::PaperTrail.generate_papertrail_id(instance.private_ip_address)
+      deregister_response     = Pipeline::Utility::PaperTrail.deregister!(papertrail_instance_id, options[:configuration][:papertrail][:token])
       
       # Remove and terminate the instances, then exit
       options[:configuration][:aws][:ec2][:instances].collect(&:terminate)
