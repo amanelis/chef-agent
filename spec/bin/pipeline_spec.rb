@@ -1,5 +1,4 @@
-require 'bin/pipeline'
-
+require 'spec_helper'
 
 describe Pipeline::Utility::PaperTrail do
 	describe '.generate_papertrail_id' do
@@ -27,4 +26,17 @@ describe Pipeline::Utility::PaperTrail do
 			it { expect(subject).to eq(result) }
 		end	
 	end
+	
+	describe '.deregister!' do
+	  context 'when a valid id and token are passed in' do
+	    let(:id) { Pipeline::Utility::PaperTrail.generate_papertrail_id('10.43.23.56') }
+	    let(:token) { '2048hgr10grhsSHDfaheZ9' }
+	    
+	    pending 'Need tests and Webmock to be enabled.'
+    end
+    
+    context 'when an invalid id or token is passed in' do
+      pending 'Need tests and Webmock to be enabled.'
+    end
+  end
 end
