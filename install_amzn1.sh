@@ -12,8 +12,8 @@ case "$1" in
     RETVAL=1
     exit $RETVAL
     ;;
-	base)
-		echo "Deploying a basic Platform server"
+  base)
+   	echo "Deploying a basic Platform server"
 		env="base"
 		;;
   staging)
