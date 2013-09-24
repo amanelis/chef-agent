@@ -1,5 +1,4 @@
 # Required libs/gems
-require 'webmock'
 require 'webmock/rspec'
 require 'capybara/rspec'
 
@@ -15,7 +14,7 @@ RSpec.configure do |config|
   
   # Capybara for integrations
   config.include Capybara::DSL
-
+  
   # Capybara configuration
   Capybara.javascript_driver = :selenium_remote_firefox
   
@@ -30,7 +29,7 @@ RSpec.configure do |config|
       WebMock.disable_net_connect!
     end
   end
-
+  
   # for connections where we need to have network access we just tag it network
   config.before(:each, :network => true) do
     WebMock.disable!

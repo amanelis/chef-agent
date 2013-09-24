@@ -1,6 +1,8 @@
 require 'spec_helper'
 
 describe Pipeline::Utility::PaperTrail do
+  include WebMock::API
+  
 	describe '.generate_papertrail_id' do
 		context 'when a valid aws private_ip address is passed in' do
       let(:private_ip) { '10.43.23.56' }
@@ -32,11 +34,16 @@ describe Pipeline::Utility::PaperTrail do
 	    let(:id) { Pipeline::Utility::PaperTrail.generate_papertrail_id('10.43.23.56') }
 	    let(:token) { '2048hgr10grhsSHDfaheZ9' }
 	    
-	    pending 'Need tests and Webmock to be enabled.'
+      #       subject {
+      #         Pipeline::Utility::PaperTrail.deregister!(id, token)
+      #       }
+      #       
+      #       it { should_not be_nil }
+      # it { should be_true }
     end
     
     context 'when an invalid id or token is passed in' do
-      pending 'Need tests and Webmock to be enabled.'
+      
     end
   end
 end
