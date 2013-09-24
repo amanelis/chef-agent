@@ -13,17 +13,17 @@ case "$1" in
     exit $RETVAL
     ;;
   base)
-   	echo "Deploying a basic Platform server"
-		env="base"
-		;;
+   echo "Deploying a basic Platform server"
+   env="base"
+   ;;
   staging)
-    echo "Deploying to Staging Environment"
-		env="staging"
-    ;;
+   echo "Deploying to Staging Environment"
+   env="staging"
+   ;;
   production)
-    echo "Deploying to Production Environment"
-		env="production"
-    ;;
+   echo "Deploying to Production Environment"
+   env="production"
+   ;;
 esac
 
 chef_binary=/usr/bin/chef-solo
@@ -33,22 +33,22 @@ chef_directory=/root/chef-agent
 if ! test -f "$chef_binary"; then
     export DEBIAN_FRONTEND=noninteractive
     
-		# House keeping
-		cd ~
+    # House keeping
+    cd ~
 		
-		# System upgrades and package installation
-		yum update -y
-		yum upgrade -y
-		yum groupinstall "Development Tools" -y
-		yum install autoconf automake apr-devel apr-util-devel bison bzip2 curl curl-devel git gcc g++ httpd-devel \
-		iconv-devel libtool	libffi-devel libyaml-devel make openssl openssl-devel patch readline readline-devel \
-		ruby-rdoc ruby-devel sqlite-devel svn zlib zlib-devel -y
+    # System upgrades and package installation
+    yum update -y
+    yum upgrade -y
+    yum groupinstall "Development Tools" -y
+    yum install autoconf automake apr-devel apr-util-devel bison bzip2 curl curl-devel git gcc g++ httpd-devel \
+    iconv-devel libtool	libffi-devel libyaml-devel make openssl openssl-devel patch readline readline-devel \
+    ruby-rdoc ruby-devel sqlite-devel svn zlib zlib-devel -y
 
-		# Install Chef
-		curl -L https://www.opscode.com/chef/install.sh | bash
+    # Install Chef
+    curl -L https://www.opscode.com/chef/install.sh | bash
 
-		# Clone our chef repository
-		git clone https://github.com/amanelis/chef-agent.git
+    # Clone our chef repository
+    git clone https://github.com/amanelis/chef-agent.git
 fi &&
 
 # Excute Chef-solo
