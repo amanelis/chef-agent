@@ -25,6 +25,34 @@ module Pipeline
       end
     end
     
+    class Dependencies
+      class << self
+        def install_main_dependencies!
+          begin 
+            orig_stdout = $stdout.dup
+            $stdout.reopen('/dev/null', 'w')
+
+            system("gem install aws-sdk --no-ri --no-rdoc") unless system("gem list | grep aws-sdk")
+            system("gem install net-ssh --no-ri --no-rdoc") unless system("gem list | grep net-ssh")
+          ensure
+            $stdout.reopen(orig_stdout)
+          end
+        end
+        
+        def require_stdlibs
+          require 'rubygems'
+          require 'optparse'
+          require 'timeout'
+          require 'yaml'
+        end
+        
+        def require_third_party
+          require 'aws-sdk'
+          require 'net/ssh'
+        end
+      end
+    end
+    
     class PaperTrail
       class << self
         
@@ -38,7 +66,7 @@ module Pipeline
         
         # deregister!
         # description: used to deregister and remove an instance from the papertrail dashbaord.
-        #   list can grow if these are not properly cleaned up.
+        #   List can grow if these are not properly cleaned up.
         # @param: String[id] - "ip-10-60-51-29"
         # @return: Boolean - based on success of deregister
         def deregister! id, token

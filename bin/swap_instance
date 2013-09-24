@@ -23,37 +23,18 @@
 #     Destructive in two ways. First, removes all instances from the load balancer and the second, it has the ability
 #     to terminate instances from the AWS account. 
 
-
-# Class patching
-# Enumerable#in_parallel: allows you to parallelize work on collections.
-module Enumerable
-  def in_parallel
-    map { |x| Thread.new { yield(x) } }.each{ |t| t.join }
-  end
-end
+# Require main lib dependency, it will handle the rest
+require './bin/lib/enumerable'
+require './bin/lib/pipeline'
 
 # Start by checking that there is always the two rubygem dependencies installed.
-begin 
-  orig_stdout = $stdout.dup
-  $stdout.reopen('/dev/null', 'w')
-
-  system("gem install aws-sdk --no-ri --no-rdoc")               unless system("gem list | grep aws-sdk")
-  system("gem install net-ssh --no-ri --no-rdoc")               unless system("gem list | grep net-ssh")
-ensure
-  $stdout.reopen(orig_stdout)
-end
+Pipeline::Utility::Dependencies.install_main_dependencies!
 
 # Require Ruby standard libs first.
-require 'rubygems'
-require 'optparse'
-require 'yaml'
+Pipeline::Utility::Dependencies.require_stdlibs
 
 # Require all third party packages.
-require 'aws-sdk'
-require 'net/ssh'
-
-# Require any class dependencies we have written.
-require './bin/pipeline'
+Pipeline::Utility::Dependencies.require_third_party
 
 # Options hash will contain all preset data for doing a valid deploy. Reference here for
 # environment variables and any variable used throughout the provision/deployment.
@@ -106,7 +87,7 @@ if File.exists?(options[:configuration][:aws][:credentials_file])
   AWS.config(:access_key_id => options[:configuration][:aws][:access_key_id], :secret_access_key => options[:configuration][:aws][:secret_access_key])
 else
   puts "--------------------------------------------------------------------"
-  puts "\033[22;31mCould not find a valid credential file at #{options[:configuration][:aws][:credentials_file]}\033[30m"
+  puts "\033[22;31mCould not find a valid credential file at #{options[:configuration][:aws][:credentials_file]}\033[0m"
   puts "--------------------------------------------------------------------"
   exit 1
 end
@@ -140,7 +121,7 @@ OptionParser.new do |parser|
   parser.separator ""
   parser.separator "Specific options:"
   
-  parser.on("-i", "--instances ARRAY", Array, "\033[32mRequired\033[30m. Pass a comma seperated list of EC2 instance ids that will be booted with build. \033[31mDO NOT PUT SPACES BETWEEN IDS AND COMMAS\033[30m") do |setting|
+  parser.on("-i", "--instances ARRAY", Array, "\033[32mRequired\033[0m. Pass a comma seperated list of EC2 instance ids that will be booted with build. \033[31mDO NOT PUT SPACES BETWEEN IDS AND COMMAS\033[0m") do |setting|
     if setting.empty?
       puts "You passed an invalid list of AWS instances, please try again."
       exit 1
@@ -153,7 +134,7 @@ OptionParser.new do |parser|
     end
   end
   
-  parser.on("-l", "--loadbalancer LOAD_BALANCER", "\033[35mOptional\033[30m. Pass the load balancer (AWS NAME) the nodes will be added to.") do |setting|
+  parser.on("-l", "--loadbalancer LOAD_BALANCER", "\033[35mOptional\033[0m. Pass the load balancer (AWS NAME) the nodes will be added to.") do |setting|
     if setting.nil?
       puts "You passed in invalid argument for switch: -l | --loadbalancer, please try again."
       exit 1
@@ -161,17 +142,17 @@ OptionParser.new do |parser|
       if load_balancers.collect(&:name).include?(setting.strip)
         options[:configuration][:aws][:elb] = load_balancers[setting.strip]
       else
-        puts "Your argument (\033[35m#{setting}\033[30m) for -l | --loadbalancer was not found under the AWS account connected, please try again."
+        puts "Your argument (\033[35m#{setting}\033[0m) for -l | --loadbalancer was not found under the AWS account connected, please try again."
         exit 1
       end
     end
   end
   
-  parser.on("-t", "--test", "\033[35mOptional\033[30m. Enable test environment and don't do any instance work.") do |setting|
+  parser.on("-t", "--test", "\033[35mOptional\033[0m. Enable test environment and don't do any instance work.") do |setting|
     options[:test_mode] = true
   end
 
-  parser.on_tail("-h", "--help", "--usage", "\033[36mHelp\033[30m. Show this usage message and quit.") do |setting|
+  parser.on_tail("-h", "--help", "--usage", "\033[36mHelp\033[0m. Show this usage message and quit.") do |setting|
     puts parser.help
     exit 1
   end
@@ -179,14 +160,14 @@ end.parse!(ARGV)
 
 # Check for a valid load balancer
 if options[:configuration][:aws][:elb].nil?
-  puts "No valid '\033[22;31m-l OR --loadbalancer\033[30m' passed. You must pass a valid loadbalancer."
+  puts "No valid '\033[22;31m-l OR --loadbalancer\033[0m' passed. You must pass a valid loadbalancer."
   exit 1
 end
 
 # Check for nil or empty instances, must be present to continue and must be in AWS account to continue as well.
 if options[:configuration][:aws][:ec2][:instances].empty? || options[:configuration][:aws][:ec2][:instances].nil?
   puts "Instances: #{options[:configuration][:aws][:ec2][:instances]}"
-  puts "No valid '\033[22;31m-i OR --instances\033[30m' passed. You must pipe a list of AWS instances into this executable or pass in as a comma seperated list."
+  puts "No valid '\033[22;31m-i OR --instances\033[0m' passed. You must pipe a list of AWS instances into this executable or pass in as a comma seperated list."
   exit 1
 else
   # Source instances in instance array and checks to see if instances passed via STDIN are actually in AWS account. For testing, included the --test
@@ -200,10 +181,10 @@ else
   end
   
   if options[:configuration][:aws][:ec2][:instances].nil? || options[:configuration][:aws][:ec2][:instances].empty?
-    puts "\033[35mAWS Instances: #{options[:configuration][:aws][:ec2][:instances].count}\033[30m"
-    puts "\033[35mThe configuration set has no valid AWS instances, so it cannot continue.\033[30m"
-    puts "\033[35mCheck the AWS instance IDs that are being passed in via STDIN and be sure\033[30m"
-    puts "\033[35mthey match valid AWS IDs in the account specified by AWS credential keys.\033[30m"
+    puts "\033[35mAWS Instances: #{options[:configuration][:aws][:ec2][:instances].count}\033[0m"
+    puts "\033[35mThe configuration set has no valid AWS instances, so it cannot continue.\033[0m"
+    puts "\033[35mCheck the AWS instance IDs that are being passed in via STDIN and be sure\033[0m"
+    puts "\033[35mthey match valid AWS IDs in the account specified by AWS credential keys.\033[0m"
     exit 1
   end
 end

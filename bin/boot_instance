@@ -16,36 +16,18 @@
 #
 #   $ bin/boot_instance -n 2
 
-# Class patching
-# Enumerable#in_parallel: allows you to parallelize work on collections.
-module Enumerable
-  def in_parallel
-    map { |x| Thread.new { yield(x) } }.each{ |t| t.join }
-  end
-end
+# Require main lib dependency, it will handle the rest
+require './bin/lib/enumerable'
+require './bin/lib/pipeline'
 
 # Start by checking that there is always the two rubygem dependencies installed.
-begin 
-  orig_stdout = $stdout.dup
-  $stdout.reopen('/dev/null', 'w')
-
-  system("gem install aws-sdk --no-ri --no-rdoc")               unless system("gem list | grep aws-sdk")
-  system("gem install net-ssh --no-ri --no-rdoc")               unless system("gem list | grep net-ssh")
-ensure
-  $stdout.reopen(orig_stdout)
-end
+Pipeline::Utility::Dependencies.install_main_dependencies!
 
 # Require Ruby standard libs first.
-require 'rubygems'
-require 'optparse'
-require 'yaml'
+Pipeline::Utility::Dependencies.require_stdlibs
 
 # Require all third party packages.
-require 'aws-sdk'
-require 'net/ssh'
-
-# Require any class dependencies we have written.
-require './bin/pipeline'
+Pipeline::Utility::Dependencies.require_third_party
 
 # Options hash will contain all preset data for doing a valid deploy. Reference here for
 # environment variables and any variable used throughout the provision/deployment.
@@ -108,7 +90,7 @@ if File.exists?(options[:configuration][:aws][:credentials_file])
   AWS.config(:access_key_id => options[:configuration][:aws][:access_key_id], :secret_access_key => options[:configuration][:aws][:secret_access_key])
 else
   puts "--------------------------------------------------------------------"
-  puts "\033[22;31mCould not find a valid credential file at #{options[:configuration][:aws][:credentials_file]}\033[30m"
+  puts "\033[22;31mCould not find a valid credential file at #{options[:configuration][:aws][:credentials_file]}\033[0m"
   puts "--------------------------------------------------------------------"
   exit 1
 end
@@ -123,7 +105,7 @@ OptionParser.new do |parser|
       setting = Integer(setting)
     rescue ArgumentError => e
       puts "--------------------------------------------------------------------"
-      puts "\033[22;31mInvalid input, please give an integer only for -n/--nodes switch.#{options[:configuration][:aws][:credentials_file]}\033[30m"
+      puts "\033[22;31mInvalid input, please give an integer only for -n/--nodes switch.\033[0m"
       puts "--------------------------------------------------------------------"
       exit 1
     end

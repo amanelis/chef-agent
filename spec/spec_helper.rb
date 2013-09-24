@@ -3,7 +3,7 @@ require 'webmock/rspec'
 require 'capybara/rspec'
 
 # Require classes for testing
-require 'bin/pipeline'
+require 'bin/lib/pipeline'
 
 RSpec.configure do |config|
   # Mock Framework
