@@ -2,8 +2,8 @@
 
 # This runs as root on the server
 # Start: 
-#		base: 			curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1.sh | bash -s base
-# 	staging: 		curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1.sh | bash -s staging
+# 	base: 	    curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1.sh | bash -s base
+# 	staging:    curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1.sh | bash -s staging
 # 	production: curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1.sh | bash -s production
 
 case "$1" in
