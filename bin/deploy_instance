@@ -332,7 +332,9 @@ if options[:configuration][:aws][:ec2][:instances].empty? || options[:configurat
   # Call and create instance(s)
   puts "Calling $ bin/boot_instance -n #{number_of_instances}"
   if options[:test_mode]
-    create_instances = options[:configuration][:aws][:ec2][:instance_count].times.inject("") { |s, i| s << "i-12345678\r\n" }
+    create_instances = options[:configuration][:aws][:ec2][:instance_count].times.inject("") { |a, b| 
+      a << "i-" + 8.times.inject("") { |s, i| s << ((rand * 10).ceil.to_s) } + "\r\n"
+    }.strip
   else
     create_instances = `./bin/boot_instance -n #{number_of_instances}`.strip
   end
