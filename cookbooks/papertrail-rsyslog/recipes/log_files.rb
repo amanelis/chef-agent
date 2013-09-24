@@ -6,7 +6,6 @@ end
 template '/etc/log_files.yml' do
 	source "log_files.yml.erb"
 	notifies :restart, 'service[remote_syslog]', :delayed
-  # not_if { ::File.exists?('/etc/log_files.yml') }
 end
 
 bash "append_host_port_to_rsyslog" do
@@ -18,5 +17,5 @@ bash "append_host_port_to_rsyslog" do
 end
 
 service "remote_syslog" do
-	action [:enable, :start]
+	action [:enable, :start, :restart]
 end
