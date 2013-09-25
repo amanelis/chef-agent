@@ -78,6 +78,7 @@ options[:configuration] = {
     :secret_access_key => nil,
     :credentials_file => '/private/signifyd/aws/credentials.yml',
     :elb => nil,
+    :platform_admin_elb => 'platform-admin',
     :ec2 => {
       :current   => [],
       :instances => [],
@@ -358,6 +359,7 @@ if options[:configuration][:aws][:ec2][:instances].empty? || options[:configurat
     }
   end
 else 
+  # This section means that instances were sent in via a pipe/STDIN, thats how they were populated.
   # Source instances in instance array and checks to see if instances passed via STDIN are actually in AWS account. For testing, included the --test
   # flag as an cmd line argument and it won't check the account for valid instances
   unless options[:test_mode]
@@ -377,6 +379,16 @@ else
   end
 end
 
+# Depending on what elb we are deploying to, if it is the 'platform-admin'
+# then on at least one of those nodes, we will want to start the email alerts.
+# The are started, by appending these arguments onto the play start command:
+#   EMAIL_ALERT_FREQUENCY=60 TRIAL_EMAIL_FREQUENCY=86400
+if options[:configuration][:aws][:elb].name == options[:configuration][:aws][:platform_admin_elb] && options[:configuration][:aws][:ec2][:instances].count == 1
+  EMAIL_ARGUMENTS = 'EMAIL_ALERT_FREQUENCY=60 TRIAL_EMAIL_FREQUENCY=86400'
+else
+  EMAIL_ARGUMENTS = ''
+end
+
 # Build instructions to be run on the server, this is very important.
 instructions = [
   "/bin/rm -rf #{options[:configuration][:play][:build_directory]}/",
@@ -389,9 +401,8 @@ instructions = [
   "/bin/rm -rf #{options[:configuration][:play][:build_directory]}/*.zip",
   "/bin/ln -nsf #{options[:configuration][:play][:build_directory]}/ /opt/play/current",
   "/usr/bin/sudo stop platform",
-  "/usr/bin/sudo start platform EMAIL_ALERT_FREQUENCY=0"
+  "/usr/bin/sudo start platform #{EMAIL_ARGUMENTS}"
 ]
-
 
 # Dynamically set the instance Name tags based on what type of deploy this is.
 if options[:configuration][:aws][:elb].instances.count == 0
