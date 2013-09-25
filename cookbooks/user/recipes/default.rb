@@ -29,14 +29,3 @@ user_account 'play' do
 		node['user']['ssh_keys']['platform']
 	]
 end
-
-
-
-
-
-
-
-
-
-
-

@@ -26,6 +26,13 @@ group "play" do
   gid 501
 end
 
+template "/etc/sudoers" do
+	source "sudoers.erb"
+	mode 0440
+	owner "root"
+	group "root"
+end
+
 #user "root" do
 #  action :manage
 #	password "$1$cV1BnEQ8$PQvZKfh22dIhVVdsL9dNr1"
@@ -50,10 +57,3 @@ end
 #	manage_home true
 #	password "$1$cV1BnEQ8$PQvZKfh22dIhVVdsL9dNr1"
 #end
-
-template "/etc/sudoers" do
-	source "sudoers.erb"
-	mode 0440
-	owner "root"
-	group "root"
-end

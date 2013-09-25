@@ -37,4 +37,9 @@ case node[:platform]
 			action :install
 			options("--no-ri --no-rdoc")
 		end
+		
+		gem_package "ohai" do
+		  action :install
+		  options("--no-ri --no-rdoc")
+	  end
 	end

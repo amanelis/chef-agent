@@ -127,6 +127,7 @@ DEPENDENCIES
   knife-ec2
   net-ssh
   nokogiri (~> 1.5.10)
+  ohai
   rspec
   selenium-webdriver
   webmock
