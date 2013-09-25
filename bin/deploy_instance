@@ -441,8 +441,7 @@ options[:configuration][:aws][:ec2][:instances].in_parallel { |instance|
       puts "  Worker[#{Thread.current.object_id}] => \033[31mTimeout on starting play for #{instance.dns_name} terminating instances\033[0m"
       
       # Do not let papertrail instances stay around, unregister them 
-      # papertrail_instance_id  = Pipeline::Utility::PaperTrail.generate_papertrail_id(instance.private_ip_address)
-      # deregister_response     = Pipeline::Utility::PaperTrail.deregister!(papertrail_instance_id, options[:configuration][:papertrail][:token])
+      # Pipeline::Utility::PaperTrail.deregister_by_aws_private_ip_address!(instance.private_ip_address)
       
       # Remove and terminate the instances, then exit
       options[:configuration][:aws][:ec2][:instances].collect(&:terminate)
@@ -460,8 +459,7 @@ options[:configuration][:aws][:ec2][:instances].in_parallel { |instance|
       puts "  Worker[#{Thread.current.object_id}] => \033[31mTerminating all instances\033[0m"
       
       # Do not let papertrail instances stay around, unregister them 
-      # papertrail_instance_id  = Pipeline::Utility::PaperTrail.generate_papertrail_id(instance.private_ip_address)
-      # deregister_response     = Pipeline::Utility::PaperTrail.deregister!(papertrail_instance_id, options[:configuration][:papertrail][:token])
+      # Pipeline::Utility::PaperTrail.deregister_by_aws_private_ip_address!(instance.private_ip_address)
       
       # Remove and terminate the instances, then exit
       options[:configuration][:aws][:ec2][:instances].collect(&:terminate)
