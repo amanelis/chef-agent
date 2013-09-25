@@ -393,7 +393,7 @@ instructions = [
 ]
 
 # Add tags to all newly created instances
-instance_tag_counter = 1
+instance_tag_counter = options[:configuration][:aws][:elb].instances.count == 0 ? 1 : options[:configuration][:aws][:elb].instances.count + 1
 options[:configuration][:aws][:ec2][:instances].each do |instance|
   # Tag the instances to the current env
   AWS.memoize do
