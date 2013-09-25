@@ -8,12 +8,12 @@
     "recipe[platform::rubygems]",
 
     // Setsup and manages users
-    "recipe[users]",
-    "recipe[user]",
+    "recipe[users]", // Installs Groups and Sudoers file
+    "recipe[user]",  // Installs Play user
 
     // https://github.com/hipsnip-cookbooks/papertrail-rsyslog
-    "recipe[papertrail-rsyslog]",
-    "recipe[papertrail-rsyslog::log_files]",
+    "recipe[papertrail-rsyslog]",             // Configures rsyslog
+    "recipe[papertrail-rsyslog::log_files]",  // Congifures remote_syslog
 
     // https://github.com/escapestudios/chef-newrelic
     "recipe[newrelic]",
