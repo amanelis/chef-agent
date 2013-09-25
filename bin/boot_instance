@@ -48,11 +48,12 @@ options[:configuration] = {
     :ec2 => {
       :default_sleep_second => 300,
       :instance_count => 1,
+      :zones => ['us-east-1a', 'us-east-1d'],
       :instance => {
         :image_id => 'ami-971758fe',
         :key_name => 'platform',
         :security_groups => ['www'],
-        :availability_zone => 'us-east-1a'
+        :availability_zone => ''
       },
       :instances => []
     }
@@ -130,6 +131,8 @@ AS3 = AWS::S3.new
 # Iterate for x times to create number of instances
 puts "Booting #{options[:configuration][:aws][:ec2][:instance_count]} AWS instance(s)..."
 options[:configuration][:aws][:ec2][:instance_count].times.collect { |ndx| 
+  options[:configuration][:aws][:ec2][:instance][:availability_zone] = options[:configuration][:aws][:ec2][:zones][ndx % 2]
+  
   instance = EC2.instances.create(options[:configuration][:aws][:ec2][:instance])
   options[:configuration][:aws][:ec2][:instances] << instance
 }
