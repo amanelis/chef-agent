@@ -428,7 +428,7 @@ options[:configuration][:aws][:ec2][:instances].in_parallel { |instance|
   wait_count = 0
   puts "Worker[#{Thread.current.object_id}] => Waiting for play to start at #{instance.dns_name}, querying application every 2 seconds from..."
   while true
-    puts "  Worker[#{Thread.current.object_id}] -> sleeping for 2 minutes on count[#{wait_count}] for #{instance.id}"
+    puts "  Worker[#{Thread.current.object_id}] -> sleeping for 2 minutes on count[#{wait_count}] for #{instance.id} with private dns: #{instance.private_dns_name}"
     sleep 120
     
     # Watch for Timeout
@@ -441,8 +441,8 @@ options[:configuration][:aws][:ec2][:instances].in_parallel { |instance|
       puts "  Worker[#{Thread.current.object_id}] => \033[31mTimeout on starting play for #{instance.dns_name} terminating instances\033[0m"
       
       # Do not let papertrail instances stay around, unregister them 
-      papertrail_instance_id  = Pipeline::Utility::PaperTrail.generate_papertrail_id(instance.private_ip_address)
-      deregister_response     = Pipeline::Utility::PaperTrail.deregister!(papertrail_instance_id, options[:configuration][:papertrail][:token])
+      # papertrail_instance_id  = Pipeline::Utility::PaperTrail.generate_papertrail_id(instance.private_ip_address)
+      # deregister_response     = Pipeline::Utility::PaperTrail.deregister!(papertrail_instance_id, options[:configuration][:papertrail][:token])
       
       # Remove and terminate the instances, then exit
       options[:configuration][:aws][:ec2][:instances].collect(&:terminate)
@@ -460,8 +460,8 @@ options[:configuration][:aws][:ec2][:instances].in_parallel { |instance|
       puts "  Worker[#{Thread.current.object_id}] => \033[31mTerminating all instances\033[0m"
       
       # Do not let papertrail instances stay around, unregister them 
-      papertrail_instance_id  = Pipeline::Utility::PaperTrail.generate_papertrail_id(instance.private_ip_address)
-      deregister_response     = Pipeline::Utility::PaperTrail.deregister!(papertrail_instance_id, options[:configuration][:papertrail][:token])
+      # papertrail_instance_id  = Pipeline::Utility::PaperTrail.generate_papertrail_id(instance.private_ip_address)
+      # deregister_response     = Pipeline::Utility::PaperTrail.deregister!(papertrail_instance_id, options[:configuration][:papertrail][:token])
       
       # Remove and terminate the instances, then exit
       options[:configuration][:aws][:ec2][:instances].collect(&:terminate)
