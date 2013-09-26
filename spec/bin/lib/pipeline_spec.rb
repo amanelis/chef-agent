@@ -10,6 +10,7 @@ describe Pipeline::Utility::PaperTrail do
           Pipeline.info "Hello logger"
         }
         it { should_not be_nil }
+        it { expect(subject.class).to eq(String) }
       end
     end
   end

@@ -483,7 +483,7 @@ options[:configuration][:aws][:ec2][:instances].in_parallel { |instance|
   end
 }
 options[:time][:build][:finish] = ((Time.now - options[:time][:build][:start]) / 60).round(2)
-puts "\033[32mThreads have completed work on instances, moving to register/swap.\033[0m"
+puts "\033[32mThreads have completed work on instances, moving to register/swap. Completed in #{options[:time][:build][:finish]} minutes.\033[0m"
 
 # Depending on which swith was passed (--register, --swap) will determine what action is done to instances.
 if options[:configuration][:aws][:elb] && options[:commands][:swap] && (options[:configuration][:aws][:ec2][:instances] != [])
