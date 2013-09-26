@@ -417,7 +417,6 @@ end
 options[:configuration][:aws][:ec2][:instances].each do |instance|
   # Tag the instances to the current env
   AWS.memoize do
-    # instance.add_tag('Name', :value => "platform-#{options[:env].to_s}-#{options[:configuration][:aws][:s3][:build_number]}-#{instance_tag_counter}")
     instance.add_tag('Name', :value => "#{options[:configuration][:aws][:elb].name}-#{options[:configuration][:aws][:s3][:build_number]}-#{instance_tag_counter}")
   end
   instance_tag_counter += 1
@@ -426,7 +425,6 @@ end
 # Break out Threads to work on each instance, ssh and configure using the instructions []
 options[:time][:build][:start] = Time.now
 options[:configuration][:aws][:ec2][:instances].in_parallel { |instance| 
-  # Do the work via SSH
   puts "SSH into #{instance.dns_name} from Thread[#{Thread.current.object_id}]"
   Net::SSH.start(instance.dns_name, 'play') do |session|
     puts " => running Instructions on #{instance.id} from Thread[#{Thread.current.object_id}]"
