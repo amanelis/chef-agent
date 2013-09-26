@@ -211,7 +211,7 @@ options[:configuration][:aws][:ec2][:current].each do |instance|
   options[:configuration][:aws][:elb].instances.deregister(instance) unless options[:test_mode]
   
   # Do not let papertrail instances stay around, unregister them 
-  Pipeline::Utility::PaperTrail.deregister_by_aws_private_ip_address!(instance.private_ip_address)
+  Pipeline::Utility::PaperTrail.deregister_by_aws_private_ip_address!(instance.private_ip_address, options[:configuration][:papertrail][:token])
   
   # Terminate instance
   instance.terminate unless options[:test_mode]

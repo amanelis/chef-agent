@@ -417,7 +417,8 @@ end
 options[:configuration][:aws][:ec2][:instances].each do |instance|
   # Tag the instances to the current env
   AWS.memoize do
-    instance.add_tag('Name', :value => "platform-#{options[:env].to_s}-#{options[:configuration][:aws][:s3][:build_number]}-#{instance_tag_counter}")
+    # instance.add_tag('Name', :value => "platform-#{options[:env].to_s}-#{options[:configuration][:aws][:s3][:build_number]}-#{instance_tag_counter}")
+    instance.add_tag('Name', :value => "#{options[:configuration][:aws][:elb].name}-#{options[:configuration][:aws][:s3][:build_number]}-#{instance_tag_counter}")
   end
   instance_tag_counter += 1
 end
@@ -452,7 +453,7 @@ options[:configuration][:aws][:ec2][:instances].in_parallel { |instance|
       puts "  Worker[#{Thread.current.object_id}] => \033[31mTimeout on starting play for #{instance.dns_name} terminating instances\033[0m"
       
       # Do not let papertrail instances stay around, unregister them 
-      Pipeline::Utility::PaperTrail.deregister_by_aws_private_ip_address!(instance.private_ip_address)
+      Pipeline::Utility::PaperTrail.deregister_by_aws_private_ip_address!(instance.private_ip_address, options[:configuration][:papertrail][:token])
       
       # Remove and terminate the instances, then exit
       options[:configuration][:aws][:ec2][:instances].collect(&:terminate)
@@ -470,7 +471,7 @@ options[:configuration][:aws][:ec2][:instances].in_parallel { |instance|
       puts "  Worker[#{Thread.current.object_id}] => \033[31mTerminating all instances\033[0m"
       
       # Do not let papertrail instances stay around, unregister them 
-      Pipeline::Utility::PaperTrail.deregister_by_aws_private_ip_address!(instance.private_ip_address)
+      Pipeline::Utility::PaperTrail.deregister_by_aws_private_ip_address!(instance.private_ip_address, options[:configuration][:papertrail][:token])
       
       # Remove and terminate the instances, then exit
       options[:configuration][:aws][:ec2][:instances].collect(&:terminate)
