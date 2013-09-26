@@ -200,14 +200,32 @@ end
 # Proceed with instance swap
 options[:configuration][:aws][:ec2][:instances].each do |instance|
   # Add/Register instance to loadbalancer
-  puts " => Adding #{instance.id} to #{options[:configuration][:aws][:elb].name}"
+  puts "  => Adding #{instance.id} to #{options[:configuration][:aws][:elb].name}"
   options[:configuration][:aws][:elb].instances.register(instance)
 end unless options[:configuration][:aws][:ec2][:instances].nil?
 
-# Proceed with instnace deregister
+# Here is where we will sleep and wait for an instances health to be ok
+puts "  => Waiting on instances to respond to proper health check on 'InService', will check every 10 seconds..."
+while true
+  sleep 10
+  # Iterate through instances and check their health
+  check_instances = []
+  options[:configuration][:aws][:elb].instances.health.collect { |array|
+    if options[:configuration][:aws][:ec2][:instances].include? array[:instance] || options[:configuration][:aws][:ec2][:instances].collect(&:id).include? array[:include].id
+      check_instances << array[:instance]
+    end
+  }
+  
+  if check_instances.collect { |i| i[:state] == "InService" || i['state'] == "InService"}.all?
+    puts "  Instances are all in a successful 'InService' state, now removing old instances."
+    break
+  end
+end
+
+# Proceed with instance deregister
 options[:configuration][:aws][:ec2][:current].each do |instance|
   # Remove/Deregister instance to loadbalancer
-  puts " => Removing/Terminating #{instance.id} from #{options[:configuration][:aws][:elb].name}"
+  puts "  => Removing/Terminating #{instance.id} from #{options[:configuration][:aws][:elb].name}"
   options[:configuration][:aws][:elb].instances.deregister(instance) unless options[:test_mode]
   
   # Do not let papertrail instances stay around, unregister them 
