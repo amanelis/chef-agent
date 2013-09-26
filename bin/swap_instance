@@ -212,7 +212,7 @@ while true
   check_instances = []
   options[:configuration][:aws][:elb].instances.health.collect { |array|
     if options[:configuration][:aws][:ec2][:instances].include?(array[:instance]) || options[:configuration][:aws][:ec2][:instances].collect(&:id).include?(array[:instance].id)
-      check_instances << array[:instance]
+      check_instances << array
     end
   }
   
