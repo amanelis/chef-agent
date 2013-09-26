@@ -211,12 +211,12 @@ while true
   # Iterate through instances and check their health
   check_instances = []
   options[:configuration][:aws][:elb].instances.health.collect { |array|
-    if options[:configuration][:aws][:ec2][:instances].include? array[:instance] || options[:configuration][:aws][:ec2][:instances].collect(&:id).include? array[:include].id
+    if options[:configuration][:aws][:ec2][:instances].include?(array[:instance]) || options[:configuration][:aws][:ec2][:instances].collect(&:id).include?(array[:instance].id)
       check_instances << array[:instance]
     end
   }
   
-  if check_instances.collect { |i| i[:state] == "InService" || i['state'] == "InService"}.all?
+  if check_instances.collect { |i| i[:state] == "InService" || i['state'] == "InService" }.all?
     puts "  Instances are all in a successful 'InService' state, now removing old instances."
     break
   end
