@@ -25,7 +25,7 @@ set mail-format {
 
 set alert <%= @node[:monit][:notify_email] %> NOT ON { action, instance, pid, ppid }
 
-set httpd port <%= node[:monit][:port] %>
+set httpd port 2812
   <%= "use address #{node[:monit][:address]}" if node[:monit][:address] %>
 <% node[:monit][:allow].each do |a| %>
   allow <%= "#{a}" %>

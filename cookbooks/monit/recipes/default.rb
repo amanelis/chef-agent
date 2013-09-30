@@ -23,6 +23,21 @@ directory "/etc/monit/conf.d/" do
   recursive true
 end
 
+directory "/var/monit" do
+  owner 'root'
+  group 'root'
+  mode 0750
+  action :create
+  recursive true
+end
+
+template "/etc/monit.conf" do
+  owner "root"
+  group "root"
+  mode 0700
+  source 'monit.conf.erb'
+end
+
 template "/etc/monit/monitrc" do
   owner "root"
   group "root"
