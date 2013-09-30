@@ -34,9 +34,9 @@ end
 file "/etc/monit.conf" do
   action :delete
   not_if {
-    if File.exists?('/etc/monit.conf')
+    begin
       File.readlines('/etc/monit.conf').first.include?('# Template')
-    else
+    rescue 
       false
     end
   }
