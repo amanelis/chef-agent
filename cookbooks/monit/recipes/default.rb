@@ -42,6 +42,13 @@ file "/etc/monit.conf" do
   }
 end
 
+template "/etc/monit/conf.d/remote_syslog" do
+  source "remote_syslog.erb"
+  owner "root"
+  mode "0644"
+  notifies :restart, "service[monit]", :delayed
+end
+
 template "/etc/monit/monitrc" do
   owner "root"
   group "root"
