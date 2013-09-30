@@ -2,6 +2,23 @@
 	"name": "Platform Base server",
 	"run_list" : [
     // Setsup up Monit, don't have a config file yet
-    "recipe[monit]"
+    "recipe[monit]",
+
+    // Install any rubygem dependencies here
+    "recipe[platform::rubygems]",
+
+    // Setsup and manages users
+    "recipe[users]", // Installs Groups and Sudoers file
+    "recipe[user]",  // Installs Play user
+
+    // https://github.com/hipsnip-cookbooks/papertrail-rsyslog
+    "recipe[papertrail-rsyslog]",             // Configures rsyslog
+    "recipe[papertrail-rsyslog::log_files]",  // Congifures remote_syslog
+
+    // https://github.com/escapestudios/chef-newrelic
+    "recipe[newrelic]",
+
+    // Base Platform setup, just create directories
+    "recipe[platform::base]"
 	]
 }
