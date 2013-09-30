@@ -31,15 +31,16 @@ directory "/var/monit" do
   recursive true
 end
 
+file "/etc/monit.conf" do
+  action :delete
+end
+
 template "/etc/monit/monitrc" do
   owner "root"
   group "root"
   mode 0700
   source 'monitrc.erb'
-end
-
-file "/etc/monit.conf" do
-  action :delete
+  notifies :restart, "service[monit]", :delayed
 end
 
 template "/etc/monit.conf" do
@@ -47,5 +48,5 @@ template "/etc/monit.conf" do
   group "root"
   mode 0700
   source 'monit.conf.erb'
-  notifies :restart, "service[monit]"
+  notifies :restart, "service[monit]", :delayed
 end
