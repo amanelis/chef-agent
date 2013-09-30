@@ -33,6 +33,13 @@ end
 
 file "/etc/monit.conf" do
   action :delete
+  not_if {
+    if File.exists?('/etc/monit.conf')
+      File.readlines('/etc/monit.conf').first.include?('# Template')
+    else
+      false
+    end
+  }
 end
 
 template "/etc/monit/monitrc" do
