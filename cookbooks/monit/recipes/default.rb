@@ -33,13 +33,13 @@ end
 
 file "/etc/monit.conf" do
   action :delete
-  not_if {
-    begin
-      File.readlines('/etc/monit.conf').first.include?('# Template')
-    rescue 
-      false
-    end
-  }
+  # not_if {
+  #   begin
+  #     File.readlines('/etc/monit.conf').first.include?('# Template')
+  #   rescue 
+  #     false
+  #   end
+  # }
 end
 
 template "/etc/monit.d/remote_syslog" do
