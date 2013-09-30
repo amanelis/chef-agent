@@ -1,5 +1,5 @@
 check process remote_syslog
-  with pidfile /var/run/remote_syslog/remote_syslog.pid
+  with pidfile /var/run/remote_syslog.pid
   start program = "/usr/bin/ruby /usr/bin/remote_syslog -c /etc/log_files.yml --pid-file /var/run/remote_syslog.pid --tls" as uid root and gid users
   stop program = "/usr/bin/killall remote_syslog"
   group remote_syslog
