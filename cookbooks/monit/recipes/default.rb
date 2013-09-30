@@ -42,7 +42,7 @@ file "/etc/monit.conf" do
   }
 end
 
-template "/etc/monit/conf.d/remote_syslog" do
+template "/etc/monit.d/remote_syslog" do
   source "remote_syslog.erb"
   owner "root"
   mode "0644"
