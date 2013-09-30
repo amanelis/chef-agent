@@ -38,6 +38,10 @@ template "/etc/monit/monitrc" do
   source 'monitrc.erb'
 end
 
+file "/etc/monit.conf" do
+  action :delete
+end
+
 template "/etc/monit.conf" do
   owner "root"
   group "root"
