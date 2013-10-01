@@ -48,7 +48,7 @@ if ! test -f "$chef_binary"; then
     curl -L https://www.opscode.com/chef/install.sh | bash
 
     # Clone our chef repository
-    git clone https://github.com/amanelis/chef-agent.git
+    git clone https://github.com/amanelis/chef-agent.git /root/chef-agent
 fi &&
 
 # Excute Chef-solo
