@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This runs as root on the server
+# This should always be run as the root user.
 # Start: 
 # 	base: 	    curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1.sh | bash -s base
 # 	staging:    curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1.sh | bash -s staging
