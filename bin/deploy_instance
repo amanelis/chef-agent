@@ -379,16 +379,6 @@ else
   end
 end
 
-# Depending on what elb we are deploying to, if it is the 'platform-admin'
-# then on at least one of those nodes, we will want to start the email alerts.
-# The are started, by appending these arguments onto the play start command:
-#   EMAIL_ALERT_FREQUENCY=60 TRIAL_EMAIL_FREQUENCY=86400
-if options[:configuration][:aws][:elb].name == options[:configuration][:aws][:platform_admin_elb] && options[:configuration][:aws][:ec2][:instances].count == 1
-  EMAIL_ARGUMENTS = 'EMAIL_ALERT_FREQUENCY=60 TRIAL_EMAIL_FREQUENCY=86400'
-else
-  EMAIL_ARGUMENTS = ''
-end
-
 # Build instructions to be run on the server, this is very important.
 instructions = [
   "/bin/rm -rf #{options[:configuration][:play][:build_directory]}/",
@@ -400,9 +390,21 @@ instructions = [
   "/usr/bin/unzip #{options[:configuration][:play][:build_directory]}/#{options[:configuration][:play][:build_hash][:build][:name]} -d #{options[:configuration][:play][:build_directory]}/",
   "/bin/rm -rf #{options[:configuration][:play][:build_directory]}/*.zip",
   "/bin/ln -nsf #{options[:configuration][:play][:build_directory]}/ /opt/play/current",
-  "/usr/bin/sudo stop platform",
-  "/usr/bin/sudo start platform #{EMAIL_ARGUMENTS}"
+  "/usr/bin/sudo stop platform"
 ]
+
+# Depending on what elb we are deploying to, if it is the 'platform-admin'
+# then on at least one of those nodes, we will want to start the email alerts.
+# The are started, by appending these arguments onto the play start command:
+#   EMAIL_ALERT_FREQUENCY=60 TRIAL_EMAIL_FREQUENCY=86400
+if options[:configuration][:aws][:elb].name == options[:configuration][:aws][:platform_admin_elb] && options[:configuration][:aws][:ec2][:instances].count == 1
+  instructions << "/usr/bin/sudo start platform EMAIL_ALERT_FREQUENCY=60 TRIAL_EMAIL_FREQUENCY=86400"
+else
+  instructions << "/usr/bin/sudo start platform"
+  instructions << "/usr/bin/sudo killall remote_syslog"
+  instructions << "/bin/ps auxww | /bin/grep 'remote' | /bin/grep -v 'grep' | /bin/awk '{print $2}' | sudo xargs kill -9"
+  instructions << "/usr/bin/sudo /usr/bin/ruby /usr/bin/remote_syslog -c /etc/log_files.yml --pid-file /var/run/remote_syslog.pid --tls"
+end
 
 # Dynamically set the instance Name tags based on what type of deploy this is.
 if options[:configuration][:aws][:elb].instances.count == 0
