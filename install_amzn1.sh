@@ -37,8 +37,8 @@ if ! test -f "$chef_binary"; then
     cd ~
 		
     # System upgrades and package installation
-    # yum update -y
-    # yum upgrade -y
+    yum update -y
+    yum upgrade -y
     yum groupinstall "Development Tools" -y
     yum install autoconf automake apr-devel apr-util-devel bison bzip2 curl curl-devel git gcc g++ httpd-devel \
     iconv-devel libtool	libffi-devel libyaml-devel make openssl openssl-devel patch readline readline-devel \
