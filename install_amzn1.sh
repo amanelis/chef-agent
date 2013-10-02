@@ -30,7 +30,7 @@ chef_binary=/usr/bin/chef-solo
 chef_directory=/root/chef-agent
 
 # Are we on a vanilla system?
-if ! test -f "$chef_binary"; then
+if [! test -f "$chef_binary"] && [ x-d "$chef_directory" ]; then
     export DEBIAN_FRONTEND=noninteractive
     
     # House keeping
@@ -50,6 +50,8 @@ if ! test -f "$chef_binary"; then
     # Clone our chef repository
     git clone https://github.com/amanelis/chef-agent.git /root/chef-agent
 fi &&
+
+cd $chef_directory && git fetch && git merge origin/play
 
 # Excute Chef-solo
 $chef_binary -c $chef_directory/solo.rb -j $chef_directory/roles/$env.json
