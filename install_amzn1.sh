@@ -30,7 +30,7 @@ chef_binary=/usr/bin/chef-solo
 chef_directory=/root/chef-agent
 
 # Are we on a vanilla system?
-if [! test -f "$chef_binary"] && [ x-d "$chef_directory" ]; then
+if [! test -f "$chef_binary"] && [ ! -d "$chef_directory" ]; then
     export DEBIAN_FRONTEND=noninteractive
     
     # House keeping
