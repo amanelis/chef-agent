@@ -34,7 +34,7 @@ if ! test -f "$chef_binary"; then
     export DEBIAN_FRONTEND=noninteractive
     
     # House keeping
-    cd ~
+    cd /root
 		
     # System upgrades and package installation
     yum update -y
@@ -49,8 +49,8 @@ if ! test -f "$chef_binary"; then
 fi &&
 
 # Clone our chef repository
-rm -rf /root/chef-agent
-git clone https://github.com/amanelis/chef-agent.git /root/chef-agent
+rm -rf $chef_directory
+git clone https://github.com/amanelis/chef-agent.git $chef_directory
 
 # Excute Chef-solo
 $chef_binary -c $chef_directory/solo.rb -j $chef_directory/roles/$env.json
