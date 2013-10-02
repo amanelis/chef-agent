@@ -401,7 +401,6 @@ end
 instructions = [
   "/usr/bin/sudo killall remote_syslog",
   "/bin/ps auxww | /bin/grep 'remote' | /bin/grep -v 'grep' | /bin/awk '{print $2}' | /usr/bin/sudo /usr/bin/xargs kill -9",
-  "/usr/bin/sudo /bin/hostname #{options[:configuration][:aws][:elb].name}-#{options[:configuration][:aws][:s3][:build_number]}",
   "/bin/rm -rf #{options[:configuration][:play][:build_directory]}/",
   "/bin/mkdir #{options[:configuration][:play][:build_directory]}/",
   "/bin/touch #{options[:configuration][:play][:build_directory]}/play.log",
