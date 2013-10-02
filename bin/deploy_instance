@@ -341,7 +341,7 @@ if options[:configuration][:aws][:ec2][:instances].empty? || options[:configurat
     # Given that if ssh inside of boot_instance fails it will return exit(1) and should stop the main
     # process, but if it does not, we will catch it here, based on what it returns. which is an error
     # message that starts with this string: SSH ERROR ->
-    if create_instances ~= /^SSH ERROR ->/
+    if create_instances =~ /^SSH ERROR ->/
       exit 1
     end
   end
