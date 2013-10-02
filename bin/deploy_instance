@@ -133,9 +133,9 @@ if File.exists?(options[:configuration][:aws][:credentials_file])
   # Configure AWS
   AWS.config(:access_key_id => options[:configuration][:aws][:access_key_id], :secret_access_key => options[:configuration][:aws][:secret_access_key])
 else
-  puts "--------------------------------------------------------------------"
-  puts "\033[22;31mCould not find a valid credential file at #{options[:configuration][:aws][:credentials_file]}\033[0m"
-  puts "--------------------------------------------------------------------"
+  Pipeline.info "--------------------------------------------------------------------"
+  Pipeline.info "\033[22;31mCould not find a valid credential file at #{options[:configuration][:aws][:credentials_file]}\033[0m"
+  Pipeline.info "--------------------------------------------------------------------"
   exit 1
 end
 
@@ -179,7 +179,7 @@ OptionParser.new do |parser|
   
   parser.on("-b", "--buildurl S3_URL_TO_BUILD", "\033[32mRequired\033[0m. Pass the S3 url to the exact build that will be launched on new instance(s).") do |setting|
     if setting.nil?
-      puts "You passed in invalid argument for switch: -b | --buildurl, please try again."
+      Pipeline.info "You passed in invalid argument for switch: -b | --buildurl, please try again."
       exit 1
     else
       if setting =~ /^https:\/\/s3.amazonaws.com\/com.signifyd.(.*)\/platform-builds\/(\d){1,15}(\/)?$/
@@ -247,8 +247,7 @@ OptionParser.new do |parser|
           options[:env] = :staging
         end
       else
-        puts "Must be a valid S3 url for switch: -b | --buildurl, please try again. Follow the format below"
-        puts "  "
+        Pipeline.info "Must be a valid S3 url for switch: -b | --buildurl, please try again. Follow the format below"
         exit 1
       end
     end
@@ -256,13 +255,13 @@ OptionParser.new do |parser|
 
   parser.on("-l", "--loadbalancer LOAD_BALANCER", "\033[35mOptional\033[0m. Pass the load balancer (AWS NAME) the nodes will be added to.") do |setting|
     if setting.nil?
-      puts "You passed in invalid argument for switch: -l | --loadbalancer, please try again."
+      Pipeline.info "You passed in invalid argument for switch: -l | --loadbalancer, please try again."
       exit 1
     else
       if load_balancers.collect(&:name).include?(setting.strip)
         options[:configuration][:aws][:elb] = load_balancers[setting.strip]
       else
-        puts "Your argument (\033[35m#{setting}\033[0m) for -l | --loadbalancer was not found under the AWS account connected, please try again."
+        Pipeline.info "Your argument (\033[35m#{setting}\033[0m) for -l | --loadbalancer was not found under the AWS account connected, please try again."
         exit 1
       end
     end
@@ -272,9 +271,9 @@ OptionParser.new do |parser|
     begin
       setting = Integer(setting)
     rescue ArgumentError => e
-      puts "--------------------------------------------------------------------"
-      puts "\033[22;31mInvalid input, please give an integer only for -n/--nodes switch.\033[0m"
-      puts "--------------------------------------------------------------------"
+      Pipeline.info "--------------------------------------------------------------------"
+      Pipeline.info "\033[22;31mInvalid input, please give an integer only for -n/--nodes switch.\033[0m"
+      Pipeline.info "--------------------------------------------------------------------"
       exit 1
     end
     
@@ -294,7 +293,7 @@ OptionParser.new do |parser|
   end
 
   parser.on_tail("-h", "--help", "--usage", "\033[36mHelp\033[0m. Show this usage message and quit.") do |setting|
-    puts parser.help
+    Pipeline.info parser.help
     exit 1
   end
 end.parse!(ARGV)
@@ -304,14 +303,14 @@ options[:time][:main][:start] = Time.now
 
 # Must pass at least one option for elb, either --register or --swap
 if options[:commands][:register] == false && options[:commands][:swap] == false
-  puts "No valid '\033[22;31m-r/--register OR -s/--swap\033[0m' passed. You must choose one action to run against the new instances created."
+  Pipeline.info "No valid '\033[22;31m-r/--register OR -s/--swap\033[0m' passed. You must choose one action to run against the new instances created."
   exit 1
 end
 
 # Check for a valid build number that should have been passed to the script
 if options[:configuration][:aws][:s3][:bucket].nil? || options[:configuration][:aws][:s3][:build_number].nil? || 
    options[:configuration][:aws][:s3][:build_path].nil? || options[:configuration][:aws][:s3][:build_url].nil?
-  puts "No valid '\033[22;31m-b OR --buildurl\033[0m' passed. If you have passed a build url, that it might be of incorrect format."
+  Pipeline.info "No valid '\033[22;31m-b OR --buildurl\033[0m' passed. If you have passed a build url, that it might be of incorrect format."
   exit 1
 end
 
@@ -331,7 +330,7 @@ if options[:configuration][:aws][:ec2][:instances].empty? || options[:configurat
   end
 
   # Call and create instance(s)
-  puts "Calling $ bin/boot_instance -n #{number_of_instances}"
+  Pipeline.info "Calling $ bin/boot_instance -n #{number_of_instances}"
   if options[:test_mode]
     create_instances = options[:configuration][:aws][:ec2][:instance_count].times.inject("") { |a, b| 
       a << "i-" + 8.times.inject("") { |s, i| s << ((rand * 10).ceil.to_s) } + "\r\n"
@@ -371,10 +370,10 @@ else
   end
   
   if options[:configuration][:aws][:ec2][:instances].nil? || options[:configuration][:aws][:ec2][:instances].empty?
-    puts "\033[35mAWS Instances: #{options[:configuration][:aws][:ec2][:instances].count}\033[0m"
-    puts "\033[35mThe configuration set has no valid AWS instances, so it cannot continue.\033[0m"
-    puts "\033[35mCheck the AWS instance IDs that are being passed in via STDIN and be sure\033[0m"
-    puts "\033[35mthey match valid AWS IDs in the account specified by AWS credential keys.\033[0m"
+    Pipeline.info "\033[35mAWS Instances: #{options[:configuration][:aws][:ec2][:instances].count}\033[0m"
+    Pipeline.info "\033[35mThe configuration set has no valid AWS instances, so it cannot continue.\033[0m"
+    Pipeline.info "\033[35mCheck the AWS instance IDs that are being passed in via STDIN and be sure\033[0m"
+    Pipeline.info "\033[35mthey match valid AWS IDs in the account specified by AWS credential keys.\033[0m"
     exit 1
   end
 end
@@ -429,9 +428,9 @@ instructions << "/usr/bin/sudo /usr/bin/ruby /usr/bin/remote_syslog -c /etc/log_
 # Break out Threads to work on each instance, ssh and configure using the instructions []
 options[:time][:build][:start] = Time.now
 options[:configuration][:aws][:ec2][:instances].in_parallel { |instance| 
-  puts "SSH into #{instance.dns_name} from Thread[#{Thread.current.object_id}]"
+  Pipeline.info "SSH into #{instance.dns_name} from Thread[#{Thread.current.object_id}]"
   Net::SSH.start(instance.dns_name, 'play') do |session|
-    puts " => running Instructions on #{instance.id} from Thread[#{Thread.current.object_id}]"
+    Pipeline.info " => running Instructions on #{instance.id} from Thread[#{Thread.current.object_id}]"
     instructions.each do |instruction|
       session.exec instruction
       session.loop
@@ -440,9 +439,9 @@ options[:configuration][:aws][:ec2][:instances].in_parallel { |instance|
   
   # Waiting for play to start, then exit
   wait_count = 1
-  puts "Worker[#{Thread.current.object_id}] => Waiting for play to start at #{instance.dns_name}..."
+  Pipeline.info "Worker[#{Thread.current.object_id}] => Waiting for play to start at #{instance.dns_name}..."
   while true
-    puts "  Worker[#{Thread.current.object_id}] -> sleeping 2 minutes, count[#{wait_count}] for #{instance.id} at public: #{instance.dns_name}, private: #{instance.private_dns_name}"
+    Pipeline.info "  Worker[#{Thread.current.object_id}] -> sleeping 2 minutes, count[#{wait_count}] for #{instance.id} at public: #{instance.dns_name}"
     sleep 120
     
     # Watch for Timeout
@@ -451,8 +450,8 @@ options[:configuration][:aws][:ec2][:instances].in_parallel { |instance|
         `curl -Is http://#{instance.dns_name} | grep -c 303`.strip
       end
     rescue Timeout::Error => e
-      puts "  Worker[#{Thread.current.object_id}] => \033[31mTimeout::Error #{e}\033[0m"
-      puts "  Worker[#{Thread.current.object_id}] => \033[31mTimeout on starting play for #{instance.dns_name} terminating instances\033[0m"
+      Pipeline.info "  Worker[#{Thread.current.object_id}] => \033[31mTimeout::Error #{e}\033[0m"
+      Pipeline.info "  Worker[#{Thread.current.object_id}] => \033[31mTimeout on starting play for #{instance.dns_name} terminating instances\033[0m"
       
       # Do not let papertrail instances stay around, unregister them 
       Pipeline::Utility::PaperTrail.deregister_by_aws_private_ip_address!(instance.private_ip_address, options[:configuration][:papertrail][:token])
@@ -464,13 +463,13 @@ options[:configuration][:aws][:ec2][:instances].in_parallel { |instance|
     end
     
     if response == 1 || response == "1"
-      puts "  Worker[#{Thread.current.object_id}] => Instance[#{instance.id}] has booted \033[32msuccessfully\033[0m - thread/worker complete"
+      Pipeline.info "  Worker[#{Thread.current.object_id}] => Instance[#{instance.id}] has booted \033[32msuccessfully\033[0m - thread/worker complete"
       break
     end
     
     if wait_count == 4
-      puts "  Worker[#{Thread.current.object_id}] => \033[31mwait_count hit[#{wait_count}], waiting for play to start on #{instance.dns_name}\033[0m"
-      puts "  Worker[#{Thread.current.object_id}] => \033[31mTerminating all instances\033[0m"
+      Pipeline.info "  Worker[#{Thread.current.object_id}] => \033[31mwait_count hit[#{wait_count}], waiting for play to start on #{instance.dns_name}\033[0m"
+      Pipeline.info "  Worker[#{Thread.current.object_id}] => \033[31mTerminating all instances\033[0m"
       
       # Do not let papertrail instances stay around, unregister them 
       Pipeline::Utility::PaperTrail.deregister_by_aws_private_ip_address!(instance.private_ip_address, options[:configuration][:papertrail][:token])
@@ -486,22 +485,22 @@ options[:configuration][:aws][:ec2][:instances].in_parallel { |instance|
   end
 }
 options[:time][:build][:finish] = ((Time.now - options[:time][:build][:start]) / 60).round(2)
-puts "\033[32mThreads have completed work on instances, moving to register/swap. Completed in #{options[:time][:build][:finish]} minutes.\033[0m"
+Pipeline.info "\033[32mThreads have completed work on instances, moving to register/swap. Completed in #{options[:time][:build][:finish]} minutes.\033[0m"
 
 # Depending on which swith was passed (--register, --swap) will determine what action is done to instances.
 if options[:configuration][:aws][:elb] && options[:commands][:swap] && (options[:configuration][:aws][:ec2][:instances] != [])
   # Swap instances on load balancer with newly created instances only if there are instances 
-  puts "Swapping instances on loadbalancer[#{options[:configuration][:aws][:elb].name}] now..."
-  puts "Calling $ bin/swap_instance -l #{options[:configuration][:aws][:elb].name} -i #{options[:configuration][:aws][:ec2][:instances].collect(&:id).join(',')}"
+  Pipeline.info "Swapping instances on loadbalancer[#{options[:configuration][:aws][:elb].name}] now..."
+  Pipeline.info "Calling $ bin/swap_instance -l #{options[:configuration][:aws][:elb].name} -i #{options[:configuration][:aws][:ec2][:instances].collect(&:id).join(',')}"
   `./bin/swap_instance -l #{options[:configuration][:aws][:elb].name} -i #{options[:configuration][:aws][:ec2][:instances].collect(&:id).join(',')}`
 elsif options[:configuration][:aws][:elb] && options[:commands][:register] && (options[:configuration][:aws][:ec2][:instances] != [])
   # Registering new instances
-  puts "Registering instances on loadbalancer[#{options[:configuration][:aws][:elb].name}] now..."
-  puts "Calling $ bin/register_instance -l #{options[:configuration][:aws][:elb].name} -i #{options[:configuration][:aws][:ec2][:instances].collect(&:id).join(',')}"
+  Pipeline.info "Registering instances on loadbalancer[#{options[:configuration][:aws][:elb].name}] now..."
+  Pipeline.info "Calling $ bin/register_instance -l #{options[:configuration][:aws][:elb].name} -i #{options[:configuration][:aws][:ec2][:instances].collect(&:id).join(',')}"
   `./bin/register_instance -l #{options[:configuration][:aws][:elb].name} -i #{options[:configuration][:aws][:ec2][:instances].collect(&:id).join(',')}`
 end
 
 options[:time][:main][:finish]  = ((Time.now - options[:time][:main][:start]) / 60).round(2)
-puts options[:configuration][:aws][:ec2][:instances].collect { |i| i.id }
-puts "Completed[Build] in #{options[:time][:build][:finish]} minutes."
-puts "Completed[Main] in #{options[:time][:main][:finish]} minutes."
+Pipeline.info options[:configuration][:aws][:ec2][:instances].collect { |i| i.id }
+Pipeline.info "Completed[Build] in #{options[:time][:build][:finish]} minutes."
+Pipeline.info "Completed[Main] in #{options[:time][:main][:finish]} minutes."
