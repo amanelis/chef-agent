@@ -379,8 +379,44 @@ else
   end
 end
 
+# Dynamically set the instance Name tags based on what type of deploy this is.
+if options[:configuration][:aws][:elb].instances.count == 0
+  instance_tag_counter = 1
+elsif options[:configuration][:aws][:elb].instances.count > 0 && options[:commands][:register]
+  instance_tag_counter = options[:configuration][:aws][:elb].instances.count + 1
+else
+  instance_tag_counter = 1
+end
+
+# Add tags to all newly created instances
+options[:configuration][:aws][:ec2][:instances].each do |instance|
+  # Tag the instances to the current env
+  AWS.memoize do
+    instance.add_tag('Name', :value => "#{options[:configuration][:aws][:elb].name}-#{options[:configuration][:aws][:s3][:build_number]}-#{instance_tag_counter}")
+  end
+  instance_tag_counter += 1
+end
+
+# We need to configure the hostname
+system_hostname = ""
+system_hostname += "NETWORKING=yes\n"
+system_hostname += "HOSTNAME=#{options[:configuration][:aws][:elb].name}-#{options[:configuration][:aws][:s3][:build_number]}-#{instance_tag_counter}\n"
+system_hostname += "NOZEROCONF=yes\n"
+system_hostname += "NETWORKING_IPV6=no\n"
+system_hostname += "IPV6INIT=no\n"
+system_hostname += "IPV6_ROUTER=no\n"
+system_hostname += "IPV6_AUTOCONF=no\n"
+system_hostname += "IPV6FORWARDING=no\n"
+system_hostname += "IPV6TO4INIT=no\n"
+system_hostname += "IPV6_CONTROL_RADVD=no\n"
+
 # Build instructions to be run on the server, this is very important.
 instructions = [
+  "/usr/bin/sudo killall remote_syslog",
+  "/bin/ps auxww | /bin/grep 'remote' | /bin/grep -v 'grep' | /bin/awk '{print $2}' | /usr/bin/sudo /usr/bin/xargs kill -9",
+  "/usr/bin/sudo /bin/rm /etc/sysconfig/network && sudo /bin/touch /etc/sysconfig/network",
+  "/usr/bin/sudo /bin/echo -e '#{system_hostname}' >> /etc/sysconfig/network",
+  "/usr/bin/sudo /bin/hostname #{options[:configuration][:aws][:elb].name}-#{options[:configuration][:aws][:s3][:build_number]}-#{instance_tag_counter}",
   "/bin/rm -rf #{options[:configuration][:play][:build_directory]}/",
   "/bin/mkdir #{options[:configuration][:play][:build_directory]}/",
   "/bin/touch #{options[:configuration][:play][:build_directory]}/play.log",
@@ -401,28 +437,10 @@ if options[:configuration][:aws][:elb].name == options[:configuration][:aws][:pl
   instructions << "/usr/bin/sudo start platform EMAIL_ALERT_FREQUENCY=60 TRIAL_EMAIL_FREQUENCY=86400"
 else
   instructions << "/usr/bin/sudo start platform"
-  instructions << "/usr/bin/sudo killall remote_syslog"
-  instructions << "/bin/ps auxww | /bin/grep 'remote' | /bin/grep -v 'grep' | /bin/awk '{print $2}' | sudo xargs kill -9"
-  instructions << "/usr/bin/sudo /usr/bin/ruby /usr/bin/remote_syslog -c /etc/log_files.yml --pid-file /var/run/remote_syslog.pid --tls"
 end
 
-# Dynamically set the instance Name tags based on what type of deploy this is.
-if options[:configuration][:aws][:elb].instances.count == 0
-  instance_tag_counter = 1
-elsif options[:configuration][:aws][:elb].instances.count > 0 && options[:commands][:register]
-  instance_tag_counter = options[:configuration][:aws][:elb].instances.count + 1
-else
-  instance_tag_counter = 1
-end
-
-# Add tags to all newly created instances
-options[:configuration][:aws][:ec2][:instances].each do |instance|
-  # Tag the instances to the current env
-  AWS.memoize do
-    instance.add_tag('Name', :value => "#{options[:configuration][:aws][:elb].name}-#{options[:configuration][:aws][:s3][:build_number]}-#{instance_tag_counter}")
-  end
-  instance_tag_counter += 1
-end
+# For starting remote_syslog
+instructions << "/usr/bin/sudo /usr/bin/ruby /usr/bin/remote_syslog -c /etc/log_files.yml --pid-file /var/run/remote_syslog.pid --tls --hostname #{options[:configuration][:aws][:elb].name}-#{options[:configuration][:aws][:s3][:build_number]}-#{instance_tag_counter}"
 
 # Break out Threads to work on each instance, ssh and configure using the instructions []
 options[:time][:build][:start] = Time.now
