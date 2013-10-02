@@ -397,25 +397,10 @@ options[:configuration][:aws][:ec2][:instances].each do |instance|
   instance_tag_counter += 1
 end
 
-# We need to configure the hostname
-system_hostname = ""
-system_hostname += "NETWORKING=yes\n"
-system_hostname += "HOSTNAME=#{options[:configuration][:aws][:elb].name}-#{options[:configuration][:aws][:s3][:build_number]}\n"
-system_hostname += "NOZEROCONF=yes\n"
-system_hostname += "NETWORKING_IPV6=no\n"
-system_hostname += "IPV6INIT=no\n"
-system_hostname += "IPV6_ROUTER=no\n"
-system_hostname += "IPV6_AUTOCONF=no\n"
-system_hostname += "IPV6FORWARDING=no\n"
-system_hostname += "IPV6TO4INIT=no\n"
-system_hostname += "IPV6_CONTROL_RADVD=no\n"
-
 # Build instructions to be run on the server, this is very important.
 instructions = [
   "/usr/bin/sudo killall remote_syslog",
   "/bin/ps auxww | /bin/grep 'remote' | /bin/grep -v 'grep' | /bin/awk '{print $2}' | /usr/bin/sudo /usr/bin/xargs kill -9",
-  "/usr/bin/sudo /bin/rm /etc/sysconfig/network && sudo /bin/touch /etc/sysconfig/network",
-  "/usr/bin/sudo /bin/echo -e '#{system_hostname}' >> /etc/sysconfig/network",
   "/usr/bin/sudo /bin/hostname #{options[:configuration][:aws][:elb].name}-#{options[:configuration][:aws][:s3][:build_number]}",
   "/bin/rm -rf #{options[:configuration][:play][:build_directory]}/",
   "/bin/mkdir #{options[:configuration][:play][:build_directory]}/",
@@ -440,7 +425,7 @@ else
 end
 
 # For starting remote_syslog
-instructions << "/usr/bin/sudo /usr/bin/ruby /usr/bin/remote_syslog -c /etc/log_files.yml --pid-file /var/run/remote_syslog.pid --tls --hostname #{options[:configuration][:aws][:elb].name}-#{options[:configuration][:aws][:s3][:build_number]}-#{instance_tag_counter}"
+instructions << "/usr/bin/sudo /usr/bin/ruby /usr/bin/remote_syslog -c /etc/log_files.yml --pid-file /var/run/remote_syslog.pid --tls --hostname #{options[:configuration][:aws][:elb].name}-#{options[:configuration][:aws][:s3][:build_number]}"
 
 # Break out Threads to work on each instance, ssh and configure using the instructions []
 options[:time][:build][:start] = Time.now
