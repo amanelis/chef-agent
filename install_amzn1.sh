@@ -30,7 +30,7 @@ chef_binary=/usr/bin/chef-solo
 chef_directory=/root/chef-agent
 
 # Are we on a vanilla system?
-if [! test -f "$chef_binary" || ! -d "$chef_directory" ]; then
+if ! test -f "$chef_binary"; then
     export DEBIAN_FRONTEND=noninteractive
     
     # House keeping
@@ -46,12 +46,11 @@ if [! test -f "$chef_binary" || ! -d "$chef_directory" ]; then
 
     # Install Chef
     curl -L https://www.opscode.com/chef/install.sh | bash
-
-    # Clone our chef repository
-    git clone https://github.com/amanelis/chef-agent.git /root/chef-agent
 fi &&
 
-cd $chef_directory && git fetch && git merge origin/play
+# Clone our chef repository
+rm -rf /root/chef-agent
+git clone https://github.com/amanelis/chef-agent.git /root/chef-agent
 
 # Excute Chef-solo
 $chef_binary -c $chef_directory/solo.rb -j $chef_directory/roles/$env.json
