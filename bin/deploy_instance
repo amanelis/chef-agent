@@ -400,7 +400,7 @@ end
 # We need to configure the hostname
 system_hostname = ""
 system_hostname += "NETWORKING=yes\n"
-system_hostname += "HOSTNAME=#{options[:configuration][:aws][:elb].name}-#{options[:configuration][:aws][:s3][:build_number]}-#{instance_tag_counter}\n"
+system_hostname += "HOSTNAME=#{options[:configuration][:aws][:elb].name}-#{options[:configuration][:aws][:s3][:build_number]}\n"
 system_hostname += "NOZEROCONF=yes\n"
 system_hostname += "NETWORKING_IPV6=no\n"
 system_hostname += "IPV6INIT=no\n"
@@ -416,7 +416,7 @@ instructions = [
   "/bin/ps auxww | /bin/grep 'remote' | /bin/grep -v 'grep' | /bin/awk '{print $2}' | /usr/bin/sudo /usr/bin/xargs kill -9",
   "/usr/bin/sudo /bin/rm /etc/sysconfig/network && sudo /bin/touch /etc/sysconfig/network",
   "/usr/bin/sudo /bin/echo -e '#{system_hostname}' >> /etc/sysconfig/network",
-  "/usr/bin/sudo /bin/hostname #{options[:configuration][:aws][:elb].name}-#{options[:configuration][:aws][:s3][:build_number]}-#{instance_tag_counter}",
+  "/usr/bin/sudo /bin/hostname #{options[:configuration][:aws][:elb].name}-#{options[:configuration][:aws][:s3][:build_number]}",
   "/bin/rm -rf #{options[:configuration][:play][:build_directory]}/",
   "/bin/mkdir #{options[:configuration][:play][:build_directory]}/",
   "/bin/touch #{options[:configuration][:play][:build_directory]}/play.log",
