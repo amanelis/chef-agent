@@ -435,13 +435,28 @@ instructions << "/usr/bin/sudo /usr/bin/ruby /usr/bin/remote_syslog -c /etc/log_
 # Break out Threads to work on each instance, ssh and configure using the instructions []
 options[:time][:build][:start] = Time.now
 options[:configuration][:aws][:ec2][:instances].in_parallel { |instance| 
-  puts "SSH into #{instance.dns_name} from Thread[#{Thread.current.object_id}]"
-  Net::SSH.start(instance.dns_name, 'play') do |session|
-    puts " => running Instructions on #{instance.id} from Thread[#{Thread.current.object_id}]"
-    instructions.each do |instruction|
-      session.exec instruction
-      session.loop
+  puts "SSH into #{instance.dns_name} from Worker[#{Thread.current.object_id}]"
+    
+  begin
+    Net::SSH.start(instance.dns_name, 'play') do |session|
+      puts " => running Instructions on #{instance.id} from Worker[#{Thread.current.object_id}]"
+      instructions.each do |instruction|
+        session.exec instruction
+        session.loop
+      end
     end
+  rescue Timeout::Error
+    puts "  SSH ERROR -> Timed out for #{instance.id} - #{instance.dns_name}"
+    exit 1
+  rescue Errno::EHOSTUNREACH
+    puts "  SSH ERROR -> Host unreachable for #{instance.id} - #{instance.dns_name}"
+    exit 1
+  rescue Errno::ECONNREFUSED
+    puts "  SSH ERROR -> Connection refused for #{instance.id} - #{instance.dns_name}"
+    exit 1
+  rescue Net::SSH::AuthenticationFailed
+    puts "  SSH ERROR -> Authentication failure for #{instance.id} - #{instance.dns_name}" 
+    exit 1
   end
   
   # Waiting for play to start, then exit
