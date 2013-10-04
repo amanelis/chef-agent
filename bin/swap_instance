@@ -218,7 +218,7 @@ while true
       # We are doing the following because instances.health does not return real AWS#Instances, it just returns a hash
       # with their ID, so well save the hash with check_instance so we can get the service state, and then well save
       # the real instance for future use if we have to terminate. 
-      check_instances << {health: health, instance: ec2_instances[array[:id]]}
+      check_instances << {health: health, instance: ec2_instances[health[:id]]}
     end
   }
   
