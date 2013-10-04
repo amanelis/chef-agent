@@ -445,6 +445,9 @@ options[:configuration][:aws][:ec2][:instances].in_parallel { |instance|
         session.loop
       end
     end
+  rescue Errno::ETIMEDOUT
+    puts "  SSH ERROR -> Timed out for #{instance.id} - #{instance.dns_name}"
+    exit 1
   rescue Timeout::Error
     puts "  SSH ERROR -> Timed out for #{instance.id} - #{instance.dns_name}"
     exit 1
@@ -456,6 +459,9 @@ options[:configuration][:aws][:ec2][:instances].in_parallel { |instance|
     exit 1
   rescue Net::SSH::AuthenticationFailed
     puts "  SSH ERROR -> Authentication failure for #{instance.id} - #{instance.dns_name}" 
+    exit 1
+  rescue => e
+    puts "  SSH ERROR -> Standard Error for #{instance.id} - #{instance.dns_name}: #{e}" 
     exit 1
   end
 }
