@@ -205,20 +205,24 @@ options[:configuration][:aws][:ec2][:instances].each do |instance|
 end unless options[:configuration][:aws][:ec2][:instances].nil?
 
 # Here is where we will sleep and wait for an instances health to be ok
-puts "=> Waiting on instances to respond to proper health check on 'InService', will check every 10 seconds..."
+puts "=> Waiting on instances to respond to proper health check on 'InService', will check every 1 minute..."
 wait_count = 1
 while true
 	puts "	=> sleeping for 1 minute, on count #{wait_count}/10..."
   sleep 60
+  
   # Iterate through instances and check their health
   check_instances = []
-  options[:configuration][:aws][:elb].instances.health.collect { |array|
-    if options[:configuration][:aws][:ec2][:instances].include?(array[:instance]) || options[:configuration][:aws][:ec2][:instances].collect(&:id).include?(array[:instance].id)
-      check_instances << array
+  options[:configuration][:aws][:elb].instances.health.collect { |health|
+    if options[:configuration][:aws][:ec2][:instances].include?(health[:instance]) || options[:configuration][:aws][:ec2][:instances].collect(&:id).include?(health[:instance].id)
+      # We are doing the following because instances.health does not return real AWS#Instances, it just returns a hash
+      # with their ID, so well save the hash with check_instance so we can get the service state, and then well save
+      # the real instance for future use if we have to terminate. 
+      check_instances << {health: health, instance: ec2_instances[array[:id]]}
     end
   }
   
-  if check_instances.collect { |i| i[:state] == "InService" || i['state'] == "InService" }.all?
+  if check_instances.collect { |i| i[:health][:state] == "InService" || i['health']['state'] == "InService" }.all?
     puts "	=> \033[32mInstances are all in a successful 'InService' state, now removing old instances.\033[0m"
     break
   else
@@ -226,10 +230,10 @@ while true
 			puts "	=> \033[31mInstances failed to pass InService check, removing from ELB and terminating.\033[0m"
 
 			# Removed from ELB
-			check_instances.collect { |instance| options[:configuration][:aws][:elb].instances.deregister(instance) }
+			check_instances.collect { |hash| options[:configuration][:aws][:elb].instances.deregister(hash[:instance]) }
 
 			# Terminate the instances
-			check_instances.collect(&:terminate)
+			check_instances.collect { |hash| hash[:instance].terminate }
 
 			# Respond with exit 1
 			exit 1
