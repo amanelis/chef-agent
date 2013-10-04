@@ -156,11 +156,11 @@ end
 
 # Build a few objets we will need in OptionParser and throughout the script.
 ec2 = AWS::EC2.new
-ELB = AWS::ELB.new
+elb = AWS::ELB.new
 AS3 = AWS::S3.new
 
 # Get all load balancers and EC2 instances under account.
-load_balancers = ELB.load_balancers
+load_balancers = elb.load_balancers
 ec2_instances  = ec2.instances
 
 OptionParser.new do |parser|
