@@ -155,13 +155,13 @@ unless $stdin.tty?
 end
 
 # Build a few objets we will need in OptionParser and throughout the script.
-EC2 = AWS::EC2.new
+ec2 = AWS::EC2.new
 ELB = AWS::ELB.new
 AS3 = AWS::S3.new
 
 # Get all load balancers and EC2 instances under account.
 load_balancers = ELB.load_balancers
-ec2_instances  = EC2.instances
+ec2_instances  = ec2.instances
 
 OptionParser.new do |parser|
   parser.banner = "USAGE: deploy_instance [options]"
@@ -361,7 +361,7 @@ if options[:configuration][:aws][:ec2][:instances].empty? || options[:configurat
     ec2_instance_ids = ec2_instances.collect(&:id) 
     options[:configuration][:aws][:ec2][:instances] = options[:configuration][:aws][:ec2][:instances].inject([]) { |a, i|
       next a unless ec2_instance_ids.include?(i)
-      a << EC2.instances[i]
+      a << ec2.instances[i]
     }
   end
 else 
@@ -372,7 +372,7 @@ else
     ec2_instance_ids = ec2_instances.collect(&:id)
     options[:configuration][:aws][:ec2][:instances] = options[:configuration][:aws][:ec2][:instances].inject([]) { |a, i|
       next a unless ec2_instance_ids.include?(i)
-      a << EC2.instances[i]
+      a << ec2.instances[i]
     }
   end
   
