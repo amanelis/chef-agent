@@ -200,14 +200,16 @@ end
 # Proceed with instance swap
 options[:configuration][:aws][:ec2][:instances].each do |instance|
   # Add/Register instance to loadbalancer
-  puts "  => Adding #{instance.id} to #{options[:configuration][:aws][:elb].name}"
+  puts "=> Adding #{instance.id} to #{options[:configuration][:aws][:elb].name}"
   options[:configuration][:aws][:elb].instances.register(instance)
 end unless options[:configuration][:aws][:ec2][:instances].nil?
 
 # Here is where we will sleep and wait for an instances health to be ok
-puts "  => Waiting on instances to respond to proper health check on 'InService', will check every 10 seconds..."
+puts "=> Waiting on instances to respond to proper health check on 'InService', will check every 10 seconds..."
+wait_count = 1
 while true
-  sleep 10
+	puts "	=> sleeping for 1 minute, on count #{wait_count}/10..."
+  sleep 60
   # Iterate through instances and check their health
   check_instances = []
   options[:configuration][:aws][:elb].instances.health.collect { |array|
@@ -217,15 +219,29 @@ while true
   }
   
   if check_instances.collect { |i| i[:state] == "InService" || i['state'] == "InService" }.all?
-    puts "  Instances are all in a successful 'InService' state, now removing old instances."
+    puts "	=> \033[32mInstances are all in a successful 'InService' state, now removing old instances.\033[0m"
     break
-  end
+  else
+		if wait_count >= 10
+			puts "	=> \033[31mInstances failed to pass InService check, removing from ELB and terminating.\033[0m"
+
+			# Removed from ELB
+			check_instances.collect { |instance| options[:configuration][:aws][:elb].instances.deregister(instance) }
+
+			# Terminate the instances
+			check_instances.collect(&:terminate)
+
+			# Respond with exit 1
+			exit 1
+		end
+		wait_count += 1		
+	end
 end
 
 # Proceed with instance deregister
 options[:configuration][:aws][:ec2][:current].each do |instance|
   # Remove/Deregister instance to loadbalancer
-  puts "  => Removing/Terminating #{instance.id} from #{options[:configuration][:aws][:elb].name}"
+  puts "=> Removing/Terminating #{instance.id} from #{options[:configuration][:aws][:elb].name}"
   options[:configuration][:aws][:elb].instances.deregister(instance) 
   
   # Terminate instance
