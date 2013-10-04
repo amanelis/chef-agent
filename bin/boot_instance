@@ -53,6 +53,7 @@ options[:configuration] = {
         :image_id => 'ami-6fa0f706',
         :key_name => 'platform',
         :security_groups => ['www'],
+        :instance_type => 'm1.small',
         :availability_zone => ''
       },
       :instances => []
@@ -112,6 +113,10 @@ OptionParser.new do |parser|
     end
     
     options[:configuration][:aws][:ec2][:instance_count] = setting
+  end
+  
+  parser.on("-i", "--instance-type STRING", "Pass the instance type, 'm1.small'.") do |setting|
+    options[:configuration][:aws][:ec2][:instance][:instance_type] = setting.strip
   end
 
   parser.on_tail("-h", "--help", "--usage", "Show this usage message and quit.") do |setting|
