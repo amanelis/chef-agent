@@ -208,7 +208,7 @@ end unless options[:configuration][:aws][:ec2][:instances].nil?
 puts "=> Waiting on instances to respond to proper health check on 'InService', will check every 1 minute..."
 wait_count = 1
 while true
-	puts "	=> sleeping for 1 minute, on count #{wait_count}/10..."
+	puts "=> sleeping for 1 minute, on count #{wait_count}/10..."
   sleep 60
   
   # Iterate through instances and check their health
@@ -220,11 +220,11 @@ while true
   }
   
   if check_instances.collect { |i| i[:state] == "InService" || i['state'] == "InService" }.all?
-    puts "	=> \033[32mInstances are all in a successful 'InService' state, now removing old instances.\033[0m"
+    puts "=> \033[32mInstances are all in a successful 'InService' state, now removing old instances.\033[0m"
     break
   else
 		if wait_count >= 10
-			puts "	=> \033[31mInstances failed to pass InService check, removing from ELB and terminating.\033[0m"
+			puts "=> \033[31mInstances failed to pass InService check, removing from ELB and terminating.\033[0m"
 
 			# Removed from ELB
 			check_instances.collect { |hash| options[:configuration][:aws][:elb].instances.deregister(ec2_instances[hash[:id]]) }
