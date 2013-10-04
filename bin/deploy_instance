@@ -157,7 +157,7 @@ end
 # Build a few objets we will need in OptionParser and throughout the script.
 ec2 = AWS::EC2.new
 elb = AWS::ELB.new
-AS3 = AWS::S3.new
+as3 = AWS::S3.new
 
 # Get all load balancers and EC2 instances under account.
 load_balancers = elb.load_balancers
@@ -198,15 +198,15 @@ OptionParser.new do |parser|
         options[:configuration][:play][:build_directory]  = "#{options[:configuration][:play][:deploy_directory]}/build-#{options[:configuration][:aws][:s3][:build_number]}" 
                 
         # Build temp urls for all objects
-        platform_build_url    = AS3.buckets[bucket_path].objects["#{options[:configuration][:aws][:s3][:build_path]}/signifydplatform-1.0-SNAPSHOT.zip"].url_for(
+        platform_build_url    = as3.buckets[bucket_path].objects["#{options[:configuration][:aws][:s3][:build_path]}/signifydplatform-1.0-SNAPSHOT.zip"].url_for(
           :read,
           :expires_in => 10 * 60
         )
-        platform_javaopts_url = AS3.buckets[bucket_path].objects["#{options[:configuration][:aws][:s3][:build_path]}/java_opts"].url_for(
+        platform_javaopts_url = as3.buckets[bucket_path].objects["#{options[:configuration][:aws][:s3][:build_path]}/java_opts"].url_for(
           :read,
           :expires_in => 10 * 60
         )
-        platform_newrelic_url = AS3.buckets[bucket_path].objects["#{options[:configuration][:aws][:s3][:build_path]}/newrelic.yml"].url_for(
+        platform_newrelic_url = as3.buckets[bucket_path].objects["#{options[:configuration][:aws][:s3][:build_path]}/newrelic.yml"].url_for(
           :read,
           :expires_in => 10 * 60
         )
