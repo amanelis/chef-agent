@@ -46,11 +46,11 @@ describe Pipeline::Utility::PaperTrail do
 	    let(:id) { Pipeline::Utility::PaperTrail.generate_papertrail_id('10.43.23.56') }
 	    let(:token) { '2048hgr10grhsSHDfaheZ9' }
 	    
-      # subject {
-      #   Pipeline::Utility::PaperTrail.deregister!(id, token)
-      # }
-      #       
-      # it { should_not be_nil }
+      subject {
+        Pipeline::Utility::PaperTrail.deregister!(id, token)
+      }
+            
+      it { should_not be_nil }
       # it { should be_true }
     end
     

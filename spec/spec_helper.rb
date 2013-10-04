@@ -1,4 +1,5 @@
 # Required libs/gems
+require 'webmock'
 require 'webmock/rspec'
 require 'capybara/rspec'
 
@@ -6,14 +7,14 @@ require 'capybara/rspec'
 require 'bin/lib/pipeline'
 
 RSpec.configure do |config|
-  # Mock Framework
-  config.mock_with :rspec
-  
   # Use WebMock on any http request
   config.include WebMock::API
   
   # Capybara for integrations
   config.include Capybara::DSL
+  
+  # Mock Framework
+  config.mock_with :rspec
   
   # Use color in STDOUT
   config.color_enabled = true
