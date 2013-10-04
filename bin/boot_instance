@@ -157,6 +157,9 @@ options[:configuration][:aws][:ec2][:instances].in_parallel { |instance|
         ch.exec 'sudo sh -c "cd /root; curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1.sh | bash -s base"'
       end 
     end
+  rescue Errno::ETIMEDOUT
+    puts "  SSH ERROR -> Timed out for #{instance.id} - #{instance.dns_name}"
+    exit 1
   rescue Timeout::Error
     puts "  SSH ERROR -> Timed out for #{instance.id} - #{instance.dns_name}"
     exit 1
