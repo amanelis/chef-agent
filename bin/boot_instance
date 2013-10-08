@@ -186,5 +186,5 @@ options[:time][:chef][:finish] = ((Time.now - options[:time][:chef][:start]) / 6
 options[:time][:main][:finish] = ((Time.now - options[:time][:main][:start]) / 60).round(2)
 
 puts options[:configuration][:aws][:ec2][:instances].collect { |i| i.id }
-puts "Completed[Chef] in #{options[:time][:chef][:finish]} minutes."
-puts "Completed[Main] in #{options[:time][:main][:finish]} minutes."
+puts "Completed[Boot][Chef] in #{options[:time][:chef][:finish]} minutes."
+puts "Completed[Boot][Main] in #{options[:time][:main][:finish]} minutes."

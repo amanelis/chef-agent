@@ -496,8 +496,8 @@ end
 
 options[:time][:main][:finish]  = ((Time.now - options[:time][:main][:start]) / 60).round(2)
 puts options[:configuration][:aws][:ec2][:instances].collect { |i| i.id }
-puts "Completed[Build] in #{options[:time][:build][:finish]} minutes."
-puts "Completed[Main] in #{options[:time][:main][:finish]} minutes."
+puts "Completed[Deploy][Build] in #{options[:time][:build][:finish]} minutes."
+puts "Completed[Deploy][Main] in #{options[:time][:main][:finish]} minutes."
 puts "Exit Status: #{resulting_exit_status}"
 
 exit resulting_exit_status
