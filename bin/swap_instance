@@ -227,10 +227,10 @@ while true
 			puts "=> \033[31mInstances failed to pass InService check, removing from ELB and terminating.\033[0m"
 
 			# Removed from ELB
-			check_instances.collect { |hash| options[:configuration][:aws][:elb].instances.deregister(ec2_instances[hash[:id]]) }
+			check_instances.collect { |hash| options[:configuration][:aws][:elb].instances.deregister(hash[:instance]) }
 
 			# Terminate the instances
-			check_instances.collect { |hash| hash[:id].terminate }
+			check_instances.collect { |hash| hash[:instance].terminate }
 
 			# Respond with exit 1
 			exit 1
