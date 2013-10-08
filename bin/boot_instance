@@ -125,9 +125,6 @@ OptionParser.new do |parser|
   end
 end.parse!(ARGV)
 
-# Start timeer
-options[:time][:main][:start] = Time.now
-
 # Create a few instances to communicate with AWS
 EC2 = AWS::EC2.new
 ELB = AWS::ELB.new
@@ -150,7 +147,6 @@ sleep options[:configuration][:aws][:ec2][:default_sleep_second]
 
 # Run through instances and start SSH
 puts "Running Chef on all instances created..."
-options[:time][:chef][:start] = Time.now
 options[:configuration][:aws][:ec2][:instances].in_parallel { |instance| 
   puts "SSH into #{instance.dns_name} from Thread[#{Thread.current.object_id}]"
   
@@ -182,9 +178,7 @@ options[:configuration][:aws][:ec2][:instances].in_parallel { |instance|
     exit 1
   end
 }
-options[:time][:chef][:finish] = ((Time.now - options[:time][:chef][:start]) / 60).round(2)
-options[:time][:main][:finish] = ((Time.now - options[:time][:main][:start]) / 60).round(2)
 
 puts options[:configuration][:aws][:ec2][:instances].collect { |i| i.id }
-puts "Completed[Boot][Chef] in #{options[:time][:chef][:finish]} minutes."
-puts "Completed[Boot][Main] in #{options[:time][:main][:finish]} minutes."
+puts "Completed[Boot] - process exiting with status 0"
+exit 0
