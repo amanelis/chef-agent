@@ -115,7 +115,7 @@ OptionParser.new do |parser|
     options[:configuration][:aws][:ec2][:instance_count] = setting
   end
   
-  parser.on("-i", "--instance-type STRING", "Pass the instance type, 'm1.small'.") do |setting|
+  parser.on("-z", "--instance-type STRING", "Pass the instance type, 'm1.small'.") do |setting|
     options[:configuration][:aws][:ec2][:instance][:instance_type] = setting.strip
   end
 

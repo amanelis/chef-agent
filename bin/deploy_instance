@@ -82,7 +82,8 @@ options[:configuration] = {
     :ec2 => {
       :current   => [],
       :instances => [],
-      :instance_count => 1
+      :instance_count => 1,
+      :instance_type => 'm1.small'
     },
     :s3 => {
       :bucket       => nil,
@@ -291,6 +292,10 @@ OptionParser.new do |parser|
   parser.on("-t", "--test", "\033[35mOptional\033[0m. Enable test environment and don't do any instance work.") do |setting|
     options[:test_mode] = true
   end
+  
+  parser.on("-z", "--instance-type STRING", "Pass the instance type, 'm1.small'.") do |setting|
+    options[:configuration][:aws][:ec2][:instance_type] = setting.strip
+  end
 
   parser.on_tail("-h", "--help", "--usage", "\033[36mHelp\033[0m. Show this usage message and quit.") do |setting|
     puts parser.help
@@ -315,7 +320,8 @@ end
 # If there are no instances in load balancer, code will boot 1 instance to start with.
 if options[:configuration][:aws][:ec2][:instances].empty? || options[:configuration][:aws][:ec2][:instances].nil?
   # This means no servers were passed in via STDIN or cmd line arguments, lets create some based on loadbalancer
-  number_of_instances = 0
+  number_of_instances   = 0
+  default_instance_size = options[:configuration][:aws][:ec2][:instance_type]
   
   # If we are swaping instances, create as many as are in load balancer
   if options[:commands][:swap]
@@ -327,13 +333,13 @@ if options[:configuration][:aws][:ec2][:instances].empty? || options[:configurat
   end
 
   # Call and create instance(s)
-  puts "Calling $ bin/boot_instance -n #{number_of_instances}"
+  puts "Calling $ bin/boot_instance -n #{number_of_instances} -z #{default_instance_size}"
   if options[:test_mode]
     create_instances = options[:configuration][:aws][:ec2][:instance_count].times.inject("") { |a, b| 
       a << "i-" + 8.times.inject("") { |s, i| s << ((rand * 10).ceil.to_s) } + "\r\n"
     }.strip
   else
-    create_instances = `./bin/boot_instance -n #{number_of_instances}`.strip
+    create_instances = `./bin/boot_instance -n #{number_of_instances} -z #{default_instance_size}`.strip
     
     # Given that if ssh inside of boot_instance fails it will return exit(1) and should stop the main
     # process, but if it does not, we will catch it here, based on what it returns. which is an error
@@ -383,6 +389,8 @@ else
     exit 1
   end
 end
+
+exit
 
 # Dynamically set the instance Name tags based on what type of deploy this is.
 if options[:configuration][:aws][:elb].instances.count == 0
