@@ -294,7 +294,9 @@ OptionParser.new do |parser|
   end
   
   parser.on("-z", "--instance-type STRING", "Pass the instance type, 'm1.small'.") do |setting|
-    options[:configuration][:aws][:ec2][:instance_type] = setting.strip
+    unless setting.nil? || setting == ''
+      options[:configuration][:aws][:ec2][:instance_type] = setting.strip
+    end
   end
 
   parser.on_tail("-h", "--help", "--usage", "\033[36mHelp\033[0m. Show this usage message and quit.") do |setting|
