@@ -352,6 +352,7 @@ if options[:configuration][:aws][:ec2][:instances].empty? || options[:configurat
       exit 1
     end
   end
+  puts "Instances created successfully, continuing to build..."
   
   # Now parse out instances created
   temp_instances = create_instances.split(/\r?\n/).collect(&:strip).reject { |i| i.nil? || i == "" }
@@ -476,6 +477,7 @@ options[:configuration][:aws][:ec2][:instances].in_parallel { |instance|
 resulting_exit_status = 1
 
 # Depending on which swith was passed (--register, --swap) will determine what action is done to instances.
+puts "Getting ready to register/swap instances..."
 if options[:configuration][:aws][:elb] && options[:commands][:swap] && (options[:configuration][:aws][:ec2][:instances] != [])
   # Swap instances on load balancer with newly created instances only if there are instances 
   puts "Swapping instances on loadbalancer[#{options[:configuration][:aws][:elb].name}] now..."
