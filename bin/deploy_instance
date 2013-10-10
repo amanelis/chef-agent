@@ -347,9 +347,14 @@ if options[:configuration][:aws][:ec2][:instances].empty? || options[:configurat
     # process, but if it does not, we will catch it here, based on what it returns. which is an error
     # message that starts with this string: SSH ERROR ->
     if create_instances =~ /^SSH ERROR ->/
-      puts "Recieved SSH ERROR:"
+      puts "***************************************************"
+      puts "Error:"
       puts "  #{create_instances}"
       exit 1
+    else
+      puts "***************************************************"
+      puts "Successful:"
+      puts "  #{create_instances}"
     end
   end
   puts "Instances created successfully, continuing to build..."
