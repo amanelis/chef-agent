@@ -437,7 +437,7 @@ instructions = [
 # The are started, by appending these arguments onto the play start command:
 #   EMAIL_ALERT_FREQUENCY=60 TRIAL_EMAIL_FREQUENCY=86400
 if options[:configuration][:aws][:elb].name == options[:configuration][:aws][:platform_admin_elb] && options[:configuration][:aws][:ec2][:instances].count == 1
-  instructions << "/usr/bin/sudo start platform EMAIL_ALERT_FREQUENCY=60 TRIAL_EMAIL_FREQUENCY=86400"
+  instructions << "/usr/bin/sudo start platform EMAIL_ALERT_FREQUENCY=180 TRIAL_EMAIL_FREQUENCY=86400"
 else
   instructions << "/usr/bin/sudo start platform"
 end
