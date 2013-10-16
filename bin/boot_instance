@@ -136,7 +136,9 @@ options[:configuration][:aws][:ec2][:instance_count].times.collect { |ndx|
   # This will swap between zones used on each iteration through the count.
   options[:configuration][:aws][:ec2][:instance][:availability_zone] = options[:configuration][:aws][:ec2][:zones][ndx % 2]
   
-  instance = EC2.instances.create(options[:configuration][:aws][:ec2][:instance])
+  AWS.memoize do
+    instance = EC2.instances.create(options[:configuration][:aws][:ec2][:instance])
+  end
   options[:configuration][:aws][:ec2][:instances] << instance
 }
 
