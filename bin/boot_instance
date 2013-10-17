@@ -91,10 +91,7 @@ if File.exists?(options[:configuration][:aws][:credentials_file])
   # Configure AWS
   AWS.config(:access_key_id => options[:configuration][:aws][:access_key_id], :secret_access_key => options[:configuration][:aws][:secret_access_key])
 else
-  puts "--------------------------------------------------------------------"
-  puts "\033[22;31mCould not find a valid credential file at #{options[:configuration][:aws][:credentials_file]}\033[0m"
-  puts "--------------------------------------------------------------------"
-  exit 1
+  abort "\033[22;31mCould not find a valid credential file at #{options[:configuration][:aws][:credentials_file]}\033[0m"
 end
 
 OptionParser.new do |parser|
@@ -105,11 +102,8 @@ OptionParser.new do |parser|
   parser.on("-n", "--nodes INTEGER", "Pass the number of servers to boot up and run Chef on.") do |setting|
     begin
       setting = Integer(setting)
-    rescue ArgumentError => e
-      puts "--------------------------------------------------------------------"
-      puts "\033[22;31mInvalid input, please give an integer only for -n/--nodes switch.\033[0m"
-      puts "--------------------------------------------------------------------"
-      exit 1
+    rescue ArgumentError 
+      abort "\033[22;31mInvalid input, please give an integer only for -n/--nodes switch.\033[0m"
     end
     
     options[:configuration][:aws][:ec2][:instance_count] = setting
@@ -120,15 +114,14 @@ OptionParser.new do |parser|
   end
 
   parser.on_tail("-h", "--help", "--usage", "Show this usage message and quit.") do |setting|
-    puts parser.help
-    exit
+    abort parser.help
   end
 end.parse!(ARGV)
 
 # Create a few instances to communicate with AWS
-EC2 = AWS::EC2.new
-ELB = AWS::ELB.new
-AS3 = AWS::S3.new
+ec2 = AWS::EC2.new
+elb = AWS::ELB.new
+as3 = AWS::S3.new
 
 # Iterate for x times to create number of instances
 puts "Booting #{options[:configuration][:aws][:ec2][:instance_count]} AWS instance(s)..."
@@ -137,7 +130,7 @@ options[:configuration][:aws][:ec2][:instance_count].times.collect { |ndx|
   options[:configuration][:aws][:ec2][:instance][:availability_zone] = options[:configuration][:aws][:ec2][:zones][ndx % 2]
   
   AWS.memoize do
-    options[:configuration][:aws][:ec2][:instances] << EC2.instances.create(options[:configuration][:aws][:ec2][:instance])
+    options[:configuration][:aws][:ec2][:instances] << ec2.instances.create(options[:configuration][:aws][:ec2][:instance])
   end
 }
 
@@ -159,17 +152,17 @@ options[:configuration][:aws][:ec2][:instances].in_parallel { |instance|
       end 
     end
   rescue Errno::ETIMEDOUT
-    abort "  SSH ERROR -> [Errno::ETIMEDOUT] Timed out for #{instance.id} - #{instance.dns_name}"
+    abort "SSH ERROR -> [Errno::ETIMEDOUT] Timed out for #{instance.id} - #{instance.dns_name}"
   rescue Timeout::Error
-    abort "  SSH ERROR -> [Timeout::Error] Timed out for #{instance.id} - #{instance.dns_name}"
+    abort "SSH ERROR -> [Timeout::Error] Timed out for #{instance.id} - #{instance.dns_name}"
   rescue Errno::EHOSTUNREACH
-    abort "  SSH ERROR -> [Errno::EHOSTUNREACH] Host unreachable for #{instance.id} - #{instance.dns_name}"
+    abort "SSH ERROR -> [Errno::EHOSTUNREACH] Host unreachable for #{instance.id} - #{instance.dns_name}"
   rescue Errno::ECONNREFUSED
-    abort "  SSH ERROR -> [Errno::ECONNREFUSED] Connection refused for #{instance.id} - #{instance.dns_name}"
+    abort "SSH ERROR -> [Errno::ECONNREFUSED] Connection refused for #{instance.id} - #{instance.dns_name}"
   rescue Net::SSH::AuthenticationFailed
-    abort "  SSH ERROR -> [Net::SSH::AuthenticationFailed] Authentication failure for #{instance.id} - #{instance.dns_name}" 
+    abort "SSH ERROR -> [Net::SSH::AuthenticationFailed] Authentication failure for #{instance.id} - #{instance.dns_name}" 
   rescue => e
-    abort "  SSH ERROR -> Standard Error for #{instance.id} - #{instance.dns_name}: #{e}" 
+    abort "SSH ERROR -> Standard Error for #{instance.id} - #{instance.dns_name}: #{e}" 
   end
 }
 
