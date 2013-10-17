@@ -44,11 +44,11 @@ Now comes the fun part, downloading and running chef. This next command does a l
 
 #### Staging
 
-	$ curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1.sh | bash -s staging
+	$ curl -L https://raw.github.com/signifyd/chef-agent/play/install_amzn1.sh | bash -s staging
 	
 #### Production
 
-	$ curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1.sh | bash -s production
+	$ curl -L https://raw.github.com/signifyd/chef-agent/play/install_amzn1.sh | bash -s production
 
 ## Using Knife
 This section is experimental. Reference the [Knife AWS] docs or read the [Knife Github] source for the optional command line arguments. Trying to get the `knife` package to boot the entire image, but getting certificate errors. Be sure to run `bundle install` before running this command. You will also need to set an envrionment varibale of the following. 
