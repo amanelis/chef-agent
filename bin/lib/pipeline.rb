@@ -49,6 +49,7 @@ module Pipeline
         
         def require_stdlibs
           require 'rubygems'
+          require 'open3'
           require 'optparse'
           require 'timeout'
           require 'yaml'
