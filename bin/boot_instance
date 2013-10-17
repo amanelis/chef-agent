@@ -137,9 +137,8 @@ options[:configuration][:aws][:ec2][:instance_count].times.collect { |ndx|
   options[:configuration][:aws][:ec2][:instance][:availability_zone] = options[:configuration][:aws][:ec2][:zones][ndx % 2]
   
   AWS.memoize do
-    instance = EC2.instances.create(options[:configuration][:aws][:ec2][:instance])
+    options[:configuration][:aws][:ec2][:instances] << EC2.instances.create(options[:configuration][:aws][:ec2][:instance])
   end
-  options[:configuration][:aws][:ec2][:instances] << instance
 }
 
 # Sleep and wait for currently booting images to be ready
@@ -161,19 +160,19 @@ options[:configuration][:aws][:ec2][:instances].in_parallel { |instance|
       end 
     end
   rescue Errno::ETIMEDOUT
-    puts "  SSH ERROR -> Timed out for #{instance.id} - #{instance.dns_name}"
+    puts "  SSH ERROR -> [Errno::ETIMEDOUT] Timed out for #{instance.id} - #{instance.dns_name}"
     exit 1
   rescue Timeout::Error
-    puts "  SSH ERROR -> Timed out for #{instance.id} - #{instance.dns_name}"
+    puts "  SSH ERROR -> [Timeout::Error] Timed out for #{instance.id} - #{instance.dns_name}"
     exit 1
   rescue Errno::EHOSTUNREACH
-    puts "  SSH ERROR -> Host unreachable for #{instance.id} - #{instance.dns_name}"
+    puts "  SSH ERROR -> [Errno::EHOSTUNREACH] Host unreachable for #{instance.id} - #{instance.dns_name}"
     exit 1
   rescue Errno::ECONNREFUSED
-    puts "  SSH ERROR -> Connection refused for #{instance.id} - #{instance.dns_name}"
+    puts "  SSH ERROR -> [Errno::ECONNREFUSED] Connection refused for #{instance.id} - #{instance.dns_name}"
     exit 1
   rescue Net::SSH::AuthenticationFailed
-    puts "  SSH ERROR -> Authentication failure for #{instance.id} - #{instance.dns_name}" 
+    puts "  SSH ERROR -> [Net::SSH::AuthenticationFailed] Authentication failure for #{instance.id} - #{instance.dns_name}" 
     exit 1
   rescue => e
     puts "  SSH ERROR -> Standard Error for #{instance.id} - #{instance.dns_name}: #{e}" 
