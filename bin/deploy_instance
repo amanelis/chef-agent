@@ -341,31 +341,22 @@ if options[:configuration][:aws][:ec2][:instances].empty? || options[:configurat
     create_instances = options[:configuration][:aws][:ec2][:instance_count].times.inject("") { |a, b| 
       a << "i-" + 8.times.inject("") { |s, i| s << ((rand * 10).ceil.to_s) } + "\r\n"
     }.strip
-    
-    # Open3.popen2e("ruby /Users/amanelis/Development/Rails/tmp/exit.rb") do |stdin, stdout, wait| 
-    #   while line = stdout.gets
-    #     create_instances << line
-    #   end
-    #   
-    #   exit_status = wait.value
-    #   unless exit_status.success?
-    #     abort create_instances.split(/\r?\n/)[0]
-    #   end
-    # end
-    # temp_instances = create_instances.split(/\r?\n/).collect(&:strip).reject { |i| i.nil? || i == "" }
-    # 
-    # puts temp_instances.inspect
-    # exit
-    
   else
     # Excute instance build
-    create_instances = `./bin/boot_instance -n #{number_of_instances} -z #{default_instance_size}`.strip
+    stdin, stdout, stderr = Open3.popen3("./bin/boot_instance -n #{number_of_instances} -z #{default_instance_size}")
+    create_instances_stdout = stdout.read
+    create_instances_stderr = stderr.read
+        
+    unless create_instances_stderr == "" || create_instances_stderr == nil
+      abort create_instances_stderr
+    else
+      create_instances = create_instances_stdout
+    end
   end
-  puts "Instances created successfully, continuing to build..."
   
   # Now parse out instances created
   temp_instances = create_instances.split(/\r?\n/).collect(&:strip).reject { |i| i.nil? || i == "" }
-  
+
   # Iterate through all STDIN entries and find the one that matches an instance
   temp_instances.each do |line_instance|
     if line_instance =~ /^i-([a-zA-Z0-9]{8})$/ 
@@ -400,6 +391,11 @@ else
     puts "\033[35mthey match valid AWS IDs in the account specified by AWS credential keys.\033[0m"
     exit 1
   end
+end
+
+# One last check for instance count being empty, abort here if that is the case.
+if options[:configuration][:aws][:ec2][:instances] == nil || options[:configuration][:aws][:ec2][:instances].empty?
+  abort "Reach SSH instructions with no machines/instances to SSH into, please check bin/boot_instance or AWS keys."
 end
 
 # Dynamically set the instance Name tags based on what type of deploy this is.
@@ -462,23 +458,17 @@ options[:configuration][:aws][:ec2][:instances].in_parallel { |instance|
       end
     end
   rescue Errno::ETIMEDOUT
-    puts "  SSH ERROR -> Timed out for #{instance.id} - #{instance.dns_name}"
-    exit 1
+    abort "SSH ERROR -> [Errno::ETIMEDOUT] Timed out for #{instance.id} - #{instance.dns_name}"
   rescue Timeout::Error
-    puts "  SSH ERROR -> Timed out for #{instance.id} - #{instance.dns_name}"
-    exit 1
+    abort "SSH ERROR -> [Timeout::Error] Timed out for #{instance.id} - #{instance.dns_name}"
   rescue Errno::EHOSTUNREACH
-    puts "  SSH ERROR -> Host unreachable for #{instance.id} - #{instance.dns_name}"
-    exit 1
+    abort "SSH ERROR -> [Errno::EHOSTUNREACH] Host unreachable for #{instance.id} - #{instance.dns_name}"
   rescue Errno::ECONNREFUSED
-    puts "  SSH ERROR -> Connection refused for #{instance.id} - #{instance.dns_name}"
-    exit 1
+    abort "SSH ERROR -> [Errno::ECONNREFUSED] Connection refused for #{instance.id} - #{instance.dns_name}"
   rescue Net::SSH::AuthenticationFailed
-    puts "  SSH ERROR -> Authentication failure for #{instance.id} - #{instance.dns_name}" 
-    exit 1
+    abort "SSH ERROR -> [Net::SSH::AuthenticationFailed] Authentication failure for #{instance.id} - #{instance.dns_name}" 
   rescue => e
-    puts "  SSH ERROR -> Standard Error for #{instance.id} - #{instance.dns_name}: #{e}" 
-    exit 1
+    abort "SSH ERROR -> Standard Error for #{instance.id} - #{instance.dns_name}: #{e}" 
   end
 }
 
