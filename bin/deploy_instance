@@ -341,20 +341,25 @@ if options[:configuration][:aws][:ec2][:instances].empty? || options[:configurat
     create_instances = options[:configuration][:aws][:ec2][:instance_count].times.inject("") { |a, b| 
       a << "i-" + 8.times.inject("") { |s, i| s << ((rand * 10).ceil.to_s) } + "\r\n"
     }.strip
-  else
-    # Excute instance build
-    create_instances = `./bin/boot_instance -n #{number_of_instances} -z #{default_instance_size}`.strip
-
-    # Open3.popen2e("./bin/boot_instance -n #{number_of_instances} -z #{default_instance_size}") do |stdin, stdout, wait| 
+    
+    # Open3.popen2e("ruby /Users/amanelis/Development/Rails/tmp/exit.rb") do |stdin, stdout, wait| 
     #   while line = stdout.gets
     #     create_instances << line
     #   end
     #   
     #   exit_status = wait.value
     #   unless exit_status.success?
-    #     abort "FAILED ON: bin/boot_instance -n #{number_of_instances} -z #{default_instance_size}"
+    #     abort create_instances.split(/\r?\n/)[0]
     #   end
     # end
+    # temp_instances = create_instances.split(/\r?\n/).collect(&:strip).reject { |i| i.nil? || i == "" }
+    # 
+    # puts temp_instances.inspect
+    # exit
+    
+  else
+    # Excute instance build
+    create_instances = `./bin/boot_instance -n #{number_of_instances} -z #{default_instance_size}`.strip
   end
   puts "Instances created successfully, continuing to build..."
   
