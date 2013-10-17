@@ -322,6 +322,7 @@ end
 # If there are no instances in load balancer, code will boot 1 instance to start with.
 if options[:configuration][:aws][:ec2][:instances].empty? || options[:configuration][:aws][:ec2][:instances].nil?
   # This means no servers were passed in via STDIN or cmd line arguments, lets create some based on loadbalancer
+  create_instances      = ""
   number_of_instances   = 0
   default_instance_size = options[:configuration][:aws][:ec2][:instance_type]
   
@@ -341,21 +342,19 @@ if options[:configuration][:aws][:ec2][:instances].empty? || options[:configurat
       a << "i-" + 8.times.inject("") { |s, i| s << ((rand * 10).ceil.to_s) } + "\r\n"
     }.strip
   else
+    # Excute instance build
     create_instances = `./bin/boot_instance -n #{number_of_instances} -z #{default_instance_size}`.strip
-    
-    # Given that if ssh inside of boot_instance fails it will return exit(1) and should stop the main
-    # process, but if it does not, we will catch it here, based on what it returns. which is an error
-    # message that starts with this string: SSH ERROR ->
-    if create_instances =~ /SSH ERROR ->/
-      puts "***************************************************"
-      puts "Error:"
-      puts "  #{create_instances}"
-      exit 1
-    else
-      puts "***************************************************"
-      puts "Successful:"
-      puts "  #{create_instances}"
-    end
+
+    # Open3.popen2e("./bin/boot_instance -n #{number_of_instances} -z #{default_instance_size}") do |stdin, stdout, wait| 
+    #   while line = stdout.gets
+    #     create_instances << line
+    #   end
+    #   
+    #   exit_status = wait.value
+    #   unless exit_status.success?
+    #     abort "FAILED ON: bin/boot_instance -n #{number_of_instances} -z #{default_instance_size}"
+    #   end
+    # end
   end
   puts "Instances created successfully, continuing to build..."
   

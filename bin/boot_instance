@@ -159,23 +159,17 @@ options[:configuration][:aws][:ec2][:instances].in_parallel { |instance|
       end 
     end
   rescue Errno::ETIMEDOUT
-    puts "  SSH ERROR -> [Errno::ETIMEDOUT] Timed out for #{instance.id} - #{instance.dns_name}"
-    exit 1
+    abort "  SSH ERROR -> [Errno::ETIMEDOUT] Timed out for #{instance.id} - #{instance.dns_name}"
   rescue Timeout::Error
-    puts "  SSH ERROR -> [Timeout::Error] Timed out for #{instance.id} - #{instance.dns_name}"
-    exit 1
+    abort "  SSH ERROR -> [Timeout::Error] Timed out for #{instance.id} - #{instance.dns_name}"
   rescue Errno::EHOSTUNREACH
-    puts "  SSH ERROR -> [Errno::EHOSTUNREACH] Host unreachable for #{instance.id} - #{instance.dns_name}"
-    exit 1
+    abort "  SSH ERROR -> [Errno::EHOSTUNREACH] Host unreachable for #{instance.id} - #{instance.dns_name}"
   rescue Errno::ECONNREFUSED
-    puts "  SSH ERROR -> [Errno::ECONNREFUSED] Connection refused for #{instance.id} - #{instance.dns_name}"
-    exit 1
+    abort "  SSH ERROR -> [Errno::ECONNREFUSED] Connection refused for #{instance.id} - #{instance.dns_name}"
   rescue Net::SSH::AuthenticationFailed
-    puts "  SSH ERROR -> [Net::SSH::AuthenticationFailed] Authentication failure for #{instance.id} - #{instance.dns_name}" 
-    exit 1
+    abort "  SSH ERROR -> [Net::SSH::AuthenticationFailed] Authentication failure for #{instance.id} - #{instance.dns_name}" 
   rescue => e
-    puts "  SSH ERROR -> Standard Error for #{instance.id} - #{instance.dns_name}: #{e}" 
-    exit 1
+    abort "  SSH ERROR -> Standard Error for #{instance.id} - #{instance.dns_name}: #{e}" 
   end
 }
 
