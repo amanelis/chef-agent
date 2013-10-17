@@ -153,10 +153,9 @@ options[:configuration][:aws][:ec2][:instances].in_parallel { |instance|
   
   begin
     Net::SSH.start(instance.dns_name, 'ec2-user') do |session|
-      puts " => running Chef on #{instance.id} from Thread[#{Thread.current.object_id}]"
       session.open_channel do |ch|
         ch.request_pty
-        ch.exec 'sudo sh -c "cd /root; curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1.sh | bash -s base"'
+        ch.exec 'sudo sh -c "cd /root; curl -L https://raw.github.com/signifyd/chef-agent/play/install_amzn1.sh | bash -s base"'
       end 
     end
   rescue Errno::ETIMEDOUT
@@ -181,5 +180,4 @@ options[:configuration][:aws][:ec2][:instances].in_parallel { |instance|
 }
 
 puts options[:configuration][:aws][:ec2][:instances].collect { |i| i.id }
-puts "Completed[Boot] - process exiting with status 0"
 exit 0
