@@ -122,13 +122,12 @@ PLATFORMS
 
 DEPENDENCIES
   aws-sdk
-  capybara-webkit (= 0.11.0)
+  capybara-webkit
   chef
   faker
   fog
   knife-ec2
   net-ssh
-  nokogiri (~> 1.5.10)
   ohai
   rspec
   selenium-webdriver

@@ -2,19 +2,21 @@
 source 'https://rubygems.org'
 
 # Force 1.8.7 due to instance requirment
-ruby '1.8.7'
+# ruby '1.8.7'
+
+# Required
+gem 'aws-sdk'
+gem 'net-ssh'
 
 # Packages
-gem 'nokogiri', '~> 1.5.10'
 gem 'fog'
 gem 'chef'
 gem 'ohai'
-gem 'aws-sdk'
-gem 'net-ssh'
 gem 'knife-ec2'
 
-gem 'webmock'
+# Testing
 gem 'faker'
 gem 'rspec'
-gem 'capybara-webkit', '0.11.0'
+gem 'webmock'
+gem 'capybara-webkit'
 gem 'selenium-webdriver'
