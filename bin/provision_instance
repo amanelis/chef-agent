@@ -1,0 +1,107 @@
+#! /usr/bin/ruby -i
+
+# Author: Alex Manelis <manelis@signifyd.com>
+# Synopsis: This script is ment to boot instances on AWS and configure them
+#   using the Chef scripts that are part of this package. This script has
+#   one optional argument. Pass a -n flag to specify how many nodes you want
+#   to boot up and run chef on under the Signifyd AWS account. This script will
+#   always default to using the "base" Chef script for its just configuring a 
+#   base image. If the -n switch is left blank, the script will assume "1" 
+#   instance to be started.
+#
+# Usage:
+# 
+# Given the following command, it will boot 2 instances and return their
+# Amazon AWS EC2 instance ids.
+#
+#   $ bin/boot_instance -n 2
+
+# Require main lib dependency, it will handle the rest
+require './bin/lib/enumerable'
+require './bin/lib/pipeline'
+
+# Start by checking that there is always the two rubygem dependencies installed.
+Pipeline::Utility::Dependencies.install_main_dependencies!
+
+# Require Ruby standard libs first.
+Pipeline::Utility::Dependencies.require_stdlibs
+
+# Require all third party packages.
+Pipeline::Utility::Dependencies.require_third_party
+
+# Options hash will contain all preset data for doing a valid deploy. Reference here for
+# environment variables and any variable used throughout the provision/deployment.
+options = {}
+
+# If you want to supress/sync STDOUT
+options[:stdout] = true
+
+# Test mode will turn off real AWS interaction on certain work that needs to be done.
+options[:test_mode] = false
+
+# Main configuration for the nodes is specified here. 
+options[:configuration] = {
+  :aws => {
+    :access_key_id => nil,
+    :secret_access_key => nil,
+    :credentials_file => '/private/signifyd/aws/credentials.yml',
+    :ec2 => {
+      :default_sleep_second => 300,
+      :instance_count => 1,
+      :zones => ['us-east-1a', 'us-east-1d'],
+      :instance => {
+        :image_id => 'ami-6fa0f706',
+        :key_name => 'platform',
+        :security_groups => ['www'],
+        :instance_type => 'm1.small',
+        :availability_zone => ''
+      },
+      :instances => []
+    }
+  }
+}
+
+# Sync standard out
+$stdout.sync = options[:stdout]
+
+# First check and see if keys exist
+if File.exists?(options[:configuration][:aws][:credentials_file]) 
+  credentials = YAML::load(File.open(options[:configuration][:aws][:credentials_file], 'r'))
+  
+  # Set environment variables, this basically exports this to the current
+  # environment in the running shell.
+  ENV['EC2_ACCESS_KEY'] = credentials['aws']['access_key_id']
+  ENV['EC2_SECRET_KEY'] = credentials['aws']['secret_access_key']
+  
+  options[:configuration][:aws][:access_key_id]     = credentials['aws']['access_key_id']
+  options[:configuration][:aws][:secret_access_key] = credentials['aws']['secret_access_key']
+  
+  # Configure AWS
+  AWS.config(:access_key_id => options[:configuration][:aws][:access_key_id], :secret_access_key => options[:configuration][:aws][:secret_access_key])
+else
+  abort "\033[22;31mCould not find a valid credential file at #{options[:configuration][:aws][:credentials_file]}\033[0m"
+end
+
+OptionParser.new do |parser|
+  parser.banner = "USAGE: boot_instance [options]"
+  parser.separator ""
+  parser.separator "Specific options:"
+
+  parser.on("-n", "--nodes INTEGER", "Pass the number of servers to boot up and run Chef on.") do |setting|
+    begin
+      setting = Integer(setting)
+    rescue ArgumentError 
+      abort "\033[22;31mInvalid input, please give an integer only for -n/--nodes switch.\033[0m"
+    end
+    
+    options[:configuration][:aws][:ec2][:instance_count] = setting
+  end
+  
+  parser.on("-z", "--instance-type STRING", "Pass the instance type, 'm1.small'.") do |setting|
+    options[:configuration][:aws][:ec2][:instance][:instance_type] = setting.strip
+  end
+
+  parser.on_tail("-h", "--help", "--usage", "Show this usage message and quit.") do |setting|
+    abort parser.help
+  end
+end.parse!(ARGV)
