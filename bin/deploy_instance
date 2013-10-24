@@ -293,17 +293,20 @@ OptionParser.new do |parser|
   end
 end.parse!(ARGV)
 
+# Must pass a valid ELB
+if options[:configuration][:aws][:elb].nil?
+  abort "No valid '\033[22;31m-l/--loadbalancer'. You must pass in 1 valid load balancer.\033[0m"
+end
+
 # Must pass at least one option for elb, either --register or --swap
 if options[:commands][:register] == false && options[:commands][:swap] == false
-  puts "No valid '\033[22;31m-r/--register OR -s/--swap\033[0m' passed. You must choose one action to run against the new instances created.\033[0m"
-  exit 1
+  abort "No valid '\033[22;31m-r/--register OR -s/--swap\033[0m' passed. You must choose one action to run against the new instances created.\033[0m"
 end
 
 # Check for a valid build number that should have been passed to the script
 if options[:configuration][:aws][:s3][:bucket].nil? || options[:configuration][:aws][:s3][:build_number].nil? || 
    options[:configuration][:aws][:s3][:build_path].nil? || options[:configuration][:aws][:s3][:build_url].nil?
-  puts "No valid '\033[22;31m-b OR --buildurl\033[0m' passed. If you have passed a build url, that it might be of incorrect format.\033[0m"
-  exit 1
+  abort "No valid '\033[22;31m-b OR --buildurl\033[0m' passed. If you have passed a build url, that it might be of incorrect format.\033[0m"
 end
 
 # Check for nil or empty instances, if they are empty, we will boot number of instances in load balancer.
@@ -377,7 +380,7 @@ else
     puts "\033[35mThe configuration set has no valid AWS instances, so it cannot continue.\033[0m"
     puts "\033[35mCheck the AWS instance IDs that are being passed in via STDIN and be sure\033[0m"
     puts "\033[35mthey match valid AWS IDs in the account specified by AWS credential keys.\033[0m"
-    exit 1
+    abort "No instances to configure"
   end
 end
 
