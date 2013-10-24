@@ -82,26 +82,58 @@ else
   abort "\033[22;31mCould not find a valid credential file at #{options[:configuration][:aws][:credentials_file]}\033[0m"
 end
 
+# Capture STDIN here and parse out if STDIN contains node information. This block of code 
+# is important, if we decided to pipe( | ) data into this script, we will need to configure
+# and store it from here.
+unless $stdin.tty?
+  $stdin.each_line do |line|
+    # Save any STDIN input that contains or looks like an AWS instance ID => i-12345678
+    if line.strip =~ /^i-([a-zA-Z0-9]{8})$/ 
+      options[:configuration][:aws][:ec2][:instances] << line.strip 
+    end
+  end
+  
+  # Be sure all instances added are uniq
+  options[:configuration][:aws][:ec2][:instances] = options[:configuration][:aws][:ec2][:instances].uniq
+end
+
+# Build a few objets we will need in OptionParser and throughout the script.
+ec2 = AWS::EC2.new
+elb = AWS::ELB.new
+as3 = AWS::S3.new
+
+# Get all load balancers and EC2 instances under account.
+load_balancers = elb.load_balancers
+ec2_instances  = ec2.instances
+
 OptionParser.new do |parser|
-  parser.banner = "USAGE: boot_instance [options]"
+  parser.banner = "USAGE: deploy_instance [options]"
   parser.separator ""
   parser.separator "Specific options:"
-
+  
+  parser.on("-l", "--loadbalancer LOAD_BALANCER", "\033[35mOptional\033[0m. Pass the load balancer (AWS NAME) the nodes will be added to.") do |setting|
+    if setting.nil?
+      puts "You passed in invalid argument for switch: -l | --loadbalancer, please try again."
+      exit 1
+    else
+      if load_balancers.collect(&:name).include?(setting.strip)
+        options[:configuration][:aws][:elb] = load_balancers[setting.strip]
+      else
+        puts "Your argument (\033[35m#{setting}\033[0m) for -l | --loadbalancer was not found under the AWS account connected, please try again."
+        exit 1
+      end
+    end
+  end
+  
   parser.on("-n", "--nodes INTEGER", "Pass the number of servers to boot up and run Chef on.") do |setting|
     begin
       setting = Integer(setting)
-    rescue ArgumentError 
-      abort "\033[22;31mInvalid input, please give an integer only for -n/--nodes switch.\033[0m"
+    rescue ArgumentError => e
+      puts "--------------------------------------------------------------------"
+      puts "\033[22;31mInvalid input, please give an integer only for -n/--nodes switch.\033[0m"
+      puts "--------------------------------------------------------------------"
+      exit 1
     end
-    
     options[:configuration][:aws][:ec2][:instance_count] = setting
-  end
-  
-  parser.on("-z", "--instance-type STRING", "Pass the instance type, 'm1.small'.") do |setting|
-    options[:configuration][:aws][:ec2][:instance][:instance_type] = setting.strip
-  end
-
-  parser.on_tail("-h", "--help", "--usage", "Show this usage message and quit.") do |setting|
-    abort parser.help
   end
 end.parse!(ARGV)
