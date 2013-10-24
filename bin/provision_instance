@@ -137,3 +137,27 @@ OptionParser.new do |parser|
     options[:configuration][:aws][:ec2][:instance_count] = setting
   end
 end.parse!(ARGV)
+
+# Must pass a valid ELB
+if options[:configuration][:aws][:elb].nil?
+  abort "No valid '\033[22;31m-l/--loadbalancer'. You must pass in 1 valid load balancer.\033[0m"
+end
+
+# Iterate for x times to create number of instances
+puts "Booting #{options[:configuration][:aws][:ec2][:instance_count]} AWS instance(s)..."
+options[:configuration][:aws][:ec2][:instance_count].times.collect { |ndx| 
+  # This will swap between zones used on each iteration through the count.
+  options[:configuration][:aws][:ec2][:instance][:availability_zone] = options[:configuration][:aws][:ec2][:zones][ndx % 2]
+  
+  AWS.memoize do
+    options[:configuration][:aws][:ec2][:instances] << ec2.instances.create(options[:configuration][:aws][:ec2][:instance])
+  end
+}
+
+# Add tags to all newly created instances
+options[:configuration][:aws][:ec2][:instances].collect { |instance| 
+  # Tag the instances to the current env
+  AWS.memoize do
+    instance.add_tag('Name', :value => "CONFIGURING-#{options[:configuration][:aws][:elb].name}")
+  end
+}
