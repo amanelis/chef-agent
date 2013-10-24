@@ -61,18 +61,6 @@ options[:configuration] = {
   }
 }
 
-# Keep track of timing
-options[:time] = {
-  :main => {
-    :start => nil,
-    :finish => nil
-  },
-  :chef => {
-    :start => nil,
-    :finish => nil
-  }
-}
-
 # Sync standard out
 $stdout.sync = options[:stdout]
 
