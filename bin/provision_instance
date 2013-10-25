@@ -61,6 +61,9 @@ options[:configuration] = {
   }
 }
 
+# Build number
+current_build_number = nil
+
 # Sync standard out
 $stdout.sync = options[:stdout]
 
@@ -125,6 +128,18 @@ OptionParser.new do |parser|
     end
   end
   
+  parser.on("-b", "--buildnumber INTEGER", "Pass in the current $BUILD_NUMBER.") do |setting|
+    begin
+      setting = Integer(setting)
+    rescue ArgumentError => e
+      puts "--------------------------------------------------------------------"
+      puts "\033[22;31mInvalid input, please give an integer only for -b/--buildnumber switch.\033[0m"
+      puts "--------------------------------------------------------------------"
+      exit 1
+    end
+    current_build_number = setting
+  end
+  
   parser.on("-n", "--nodes INTEGER", "Pass the number of servers to boot up and run Chef on.") do |setting|
     begin
       setting = Integer(setting)
@@ -143,6 +158,11 @@ if options[:configuration][:aws][:elb].nil?
   abort "No valid '\033[22;31m-l/--loadbalancer'. You must pass in 1 valid load balancer.\033[0m"
 end
 
+# Must pass a valid $BUILD_NUMBER
+if current_build_number.nil?
+  abort "No valid '\033[22;31m-b/--buildnumber'. You must pass an integer value.\033[0m"
+end
+
 # Iterate for x times to create number of instances
 puts "Booting #{options[:configuration][:aws][:ec2][:instance_count]} AWS instance(s)..."
 options[:configuration][:aws][:ec2][:instance_count].times.collect { |ndx| 
@@ -158,6 +178,6 @@ options[:configuration][:aws][:ec2][:instance_count].times.collect { |ndx|
 options[:configuration][:aws][:ec2][:instances].collect { |instance| 
   # Tag the instances to the current env
   AWS.memoize do
-    instance.add_tag('Name', :value => "CONFIGURING-#{options[:configuration][:aws][:elb].name}")
+    instance.add_tag('Name', :value => "CONFIGURING-#{options[:configuration][:aws][:elb].name}-#{current_build_number}")
   end
 }
