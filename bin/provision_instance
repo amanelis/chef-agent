@@ -168,9 +168,14 @@ puts "Booting #{options[:configuration][:aws][:ec2][:instance_count]} AWS instan
 options[:configuration][:aws][:ec2][:instance_count].times.collect { |ndx| 
   # This will swap between zones used on each iteration through the count.
   options[:configuration][:aws][:ec2][:instance][:availability_zone] = options[:configuration][:aws][:ec2][:zones][ndx % 2]
-  
-  AWS.memoize do
-    options[:configuration][:aws][:ec2][:instances] << ec2.instances.create(options[:configuration][:aws][:ec2][:instance])
+
+  begin
+    AWS.memoize do
+      options[:configuration][:aws][:ec2][:instances] << ec2.instances.create(options[:configuration][:aws][:ec2][:instance])
+    end
+  rescue => e
+    puts "ERROR BOOTING INSTANCES: #{e}"
+    break
   end
 }
 
