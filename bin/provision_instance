@@ -186,3 +186,38 @@ options[:configuration][:aws][:ec2][:instances].collect { |instance|
     instance.add_tag('Name', :value => "CONFIGURING-#{options[:configuration][:aws][:elb].name}-#{current_build_number}")
   end
 }
+
+# Sleep and wait for currently booting images to be ready
+sleep 3 while options[:configuration][:aws][:ec2][:instances].any? { |i| i.status == :pending if i.respond_to?(:status) }
+puts "Sleeping #{options[:configuration][:aws][:ec2][:default_sleep_second]/60} minutes to wait for instance to fully boot and respond to ssh..."
+sleep options[:configuration][:aws][:ec2][:default_sleep_second]
+
+# Run through instances and start SSH
+puts "Running Chef on all instances created..."
+options[:configuration][:aws][:ec2][:instances].in_parallel { |instance| 
+  puts "SSH into #{instance.dns_name} from Thread[#{Thread.current.object_id}]"
+  
+  begin
+    Net::SSH.start(instance.dns_name, 'ec2-user') do |session|
+      session.open_channel do |ch|
+        ch.request_pty
+        ch.exec 'sudo sh -c "cd /root; curl -L https://raw.github.com/signifyd/chef-agent/play/install_amzn1.sh | bash -s base"'
+      end 
+    end
+  rescue Errno::ETIMEDOUT
+    abort "SSH ERROR -> [Errno::ETIMEDOUT] Timed out for #{instance.id} - #{instance.dns_name}"
+  rescue Timeout::Error
+    abort "SSH ERROR -> [Timeout::Error] Timed out for #{instance.id} - #{instance.dns_name}"
+  rescue Errno::EHOSTUNREACH
+    abort "SSH ERROR -> [Errno::EHOSTUNREACH] Host unreachable for #{instance.id} - #{instance.dns_name}"
+  rescue Errno::ECONNREFUSED
+    abort "SSH ERROR -> [Errno::ECONNREFUSED] Connection refused for #{instance.id} - #{instance.dns_name}"
+  rescue Net::SSH::AuthenticationFailed
+    abort "SSH ERROR -> [Net::SSH::AuthenticationFailed] Authentication failure for #{instance.id} - #{instance.dns_name}" 
+  rescue => e
+    abort "SSH ERROR -> Standard Error for #{instance.id} - #{instance.dns_name}: #{e}" 
+  end
+}
+
+puts options[:configuration][:aws][:ec2][:instances].collect { |i| i.id }
+exit 0
