@@ -205,7 +205,7 @@ options[:configuration][:aws][:ec2][:instances].each do |instance|
 end unless options[:configuration][:aws][:ec2][:instances].nil?
 
 # Here is where we will sleep and wait for an instances health to be ok
-puts "=> Waiting on instances to respond to proper health check on 'InService', will check every 1 minute..."
+puts "=> Waiting for instances to respond with a proper health check of 'InService', will check every 1 minute..."
 wait_count = 1
 while true
 	puts "=> sleeping for 1 minute, on count #{wait_count}/10..."
