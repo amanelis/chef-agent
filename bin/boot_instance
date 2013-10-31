@@ -126,7 +126,7 @@ options[:configuration][:aws][:ec2][:instance_count].times.collect { |ndx|
 options[:configuration][:aws][:ec2][:instances].collect { |instance| 
   # Tag the instances to the current env
   AWS.memoize do
-    instance.add_tag('Name', :value => "PENDING-#{options[:configuration][:aws][:elb].name}")
+    instance.add_tag('Name', :value => "PENDING-#{ENV['BUILD_NUMBER']}")
   end
 }
 
