@@ -122,6 +122,14 @@ options[:configuration][:aws][:ec2][:instance_count].times.collect { |ndx|
   end
 }
 
+# Add tags to all newly created instances
+options[:configuration][:aws][:ec2][:instances].collect { |instance| 
+  # Tag the instances to the current env
+  AWS.memoize do
+    instance.add_tag('Name', :value => "PENDING-#{options[:configuration][:aws][:elb].name}")
+  end
+}
+
 # Sleep and wait for currently booting images to be ready
 sleep 3 while options[:configuration][:aws][:ec2][:instances].any? { |i| i.status == :pending if i.respond_to?(:status) }
 puts "Sleeping #{options[:configuration][:aws][:ec2][:default_sleep_second]/60} minutes to wait for instance to fully boot and respond to ssh..."
