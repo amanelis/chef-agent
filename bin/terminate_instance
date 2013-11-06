@@ -136,10 +136,12 @@ abort "No valid ELB found." if elb.nil?
 # proceed with the terminate
 if elb.instances.count == terminate_instances.count
   puts "*************************************************"
-  puts elb.instances.count
-  puts terminate_instances.count
-  puts elb.inspect
-  puts terminate_instances.inspect
+  terminate_instances.each do |instance|
+    AWS.memoize do
+      puts "Terminating: #{instance.inspect}"
+      instance.terminate
+    end
+  end
   puts "*************************************************"
 else
   puts "*************************************************"
