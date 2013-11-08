@@ -138,7 +138,7 @@ if elb.instances.count == terminate_instances.count
   puts "*************************************************"
   terminate_instances.each do |instance|
     AWS.memoize do
-      puts "Terminating: #{instance.inspect}"
+      puts "Terminating: #{instance.id}"
       instance.terminate
     end
   end
