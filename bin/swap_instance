@@ -241,13 +241,20 @@ end
 
 # Proceed with instance deregister
 options[:configuration][:aws][:ec2][:current].each do |instance|
-  # Remove/Deregister instance to loadbalancer
-  puts "=> Removing/Terminating #{instance.id} from #{options[:configuration][:aws][:elb].name}"
-  options[:configuration][:aws][:elb].instances.deregister(instance) 
+  puts "=> Removing #{instance.id} from #{options[:configuration][:aws][:elb].name}"
+  options[:configuration][:aws][:elb].instances.deregister(instance) unless options[:test_mode]
+    
+  # Do not let papertrail instances stay around, unregister them 
+  Pipeline::Utility::PaperTrail.deregister_by_aws_private_ip_address!(instance.private_ip_address, options[:configuration][:papertrail][:token]) unless options[:test_mode]
+end unless options[:configuration][:aws][:ec2][:current].nil?
+
+puts "Sleeping for 60 seconds..."
+sleep 60
+
+# Proceed with instance termination
+options[:configuration][:aws][:ec2][:current].each do |instance|
+  puts "=> Terminating #{instance.id}"
   
   # Terminate instance
   instance.terminate unless options[:test_mode]
-  
-  # Do not let papertrail instances stay around, unregister them 
-  Pipeline::Utility::PaperTrail.deregister_by_aws_private_ip_address!(instance.private_ip_address, options[:configuration][:papertrail][:token]) unless options[:test_mode]
 end unless options[:configuration][:aws][:ec2][:current].nil?
