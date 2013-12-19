@@ -144,7 +144,7 @@ options[:configuration][:aws][:ec2][:instances].in_parallel { |instance|
     Net::SSH.start(instance.dns_name, 'ec2-user') do |session|
       session.open_channel do |ch|
         ch.request_pty
-        ch.exec 'sudo sh -c "cd /root; curl -L https://raw.github.com/signifyd/chef-agent/play/install_amzn1.sh | bash -s base"'
+        ch.exec 'sudo sh -c "cd /root; curl -L https://raw.github.com/signifyd/chef-agent/master/install_amzn1.sh | bash -s base"'
       end 
     end
   rescue Errno::ETIMEDOUT
