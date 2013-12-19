@@ -32,7 +32,7 @@ chef_directory=/root/chef-agent
 # Are we on a vanilla system?
 if ! test -f "$chef_binary"; then
     export DEBIAN_FRONTEND=noninteractive
-    
+
     # House keeping
     cd /root
 		
@@ -40,7 +40,7 @@ if ! test -f "$chef_binary"; then
     yum update -y
     yum upgrade -y
     yum groupinstall "Development Tools" -y
-    yum install autoconf automake apr-devel apr-util-devel bison bzip2 curl curl-devel git gcc g++ httpd-devel \
+    yum install autoconf automake apr-devel apr-util-devel bison bzip2 curl curl-devel git gcc g++ httpd-devel java-1.6.0-openjdk-devel \
     iconv-devel libtool	libffi-devel libyaml-devel make openssl openssl-devel patch readline readline-devel \
     ruby-rdoc ruby-devel sqlite-devel svn zlib zlib-devel -y
 
