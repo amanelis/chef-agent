@@ -18,3 +18,7 @@ template "/etc/init/platform.conf" do
 	owner "root"
 	group "root"
 end
+
+yum_package "java-1.6.0-openjdk-devel" do
+  action :install
+end
