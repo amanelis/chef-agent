@@ -2,7 +2,7 @@ case node[:platform]
   when "debian", "ubuntu"
   when "centos", "redhat", "amazon", "scientific"
 		remote_file "#{Chef::Config[:file_cache_path]}/rubygems-1.8.24.tgz" do
-			source "http://rubyforge.org/frs/download.php/76073/rubygems-1.8.24.tgz"
+			source "https://s3.amazonaws.com/com.signifyd.repositories/rubygems/rubygems-1.8.24.tgz"
 			action :create_if_missing
 		end
 
