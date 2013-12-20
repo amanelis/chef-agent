@@ -123,10 +123,11 @@ options[:configuration][:aws][:ec2][:instance_count].times.collect { |ndx|
 }
 
 # Add tags to all newly created instances
+possible_pending_tag_name = ENV['BUILD_NUMBER'].nil? ? "PENDING" : "PENDING-#{ENV['BUILD_NUMBER']}"
 options[:configuration][:aws][:ec2][:instances].collect { |instance| 
   # Tag the instances to the current env
   AWS.memoize do
-    instance.add_tag('Name', :value => "PENDING-#{ENV['BUILD_NUMBER']}")
+    instance.add_tag('Name', :value => possible_pending_tag_name)
   end
 }
 
