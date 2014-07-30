@@ -50,7 +50,7 @@ fi &&
 
 # Clone our chef repository
 rm -rf $chef_directory
-git clone https://github.com/signifyd/chef-agent.git $chef_directory
+git clone https://github.com/amanelis/chef-agent.git $chef_directory
 
 # Excute Chef-solo
 $chef_binary -c $chef_directory/solo.rb -j $chef_directory/roles/$env.json
