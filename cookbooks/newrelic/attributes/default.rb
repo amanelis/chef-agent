@@ -9,8 +9,8 @@
 #BASIC CONFIG
 #############
 #license(s)
-default['newrelic']['server_monitoring']['license'] = "67382d26e213c0d365405ead5a879bc0c9ef62a3"
-default['newrelic']['application_monitoring']['license'] = "67382d26e213c0d365405ead5a879bc0c9ef62a3"
+default['newrelic']['server_monitoring']['license'] = "CHANGE ME"
+default['newrelic']['application_monitoring']['license'] = "CHANGE ME"
 
 ################
 #ADVANCED CONFIG
