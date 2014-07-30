@@ -2,9 +2,9 @@
 
 # This should always be run as the root user.
 # Start: 
-# 	base: 	    curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1.sh | bash -s base
-# 	staging:    curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1.sh | bash -s staging
-# 	production: curl -L https://raw.github.com/amanelis/chef-agent/play/install_amzn1.sh | bash -s production
+# 	base: 	    curl -L https://raw.github.com/amanelis/chef-agent/master/install_amzn1.sh | bash -s base
+# 	staging:    curl -L https://raw.github.com/amanelis/chef-agent/master/install_amzn1.sh | bash -s staging
+# 	production: curl -L https://raw.github.com/amanelis/chef-agent/master/install_amzn1.sh | bash -s production
 
 case "$1" in
   "")
