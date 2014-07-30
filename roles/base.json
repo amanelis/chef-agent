@@ -2,7 +2,7 @@
 	"name": "Platform Base server",
 	"run_list" : [
     // Setsup up Monit, don't have a config file yet
-    "recipe[monit]",
+    //"recipe[monit]",
 
     // Install any rubygem dependencies here
     "recipe[platform::rubygems]",
