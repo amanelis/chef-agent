@@ -16,7 +16,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-default['papertrail']['port'] = 40007
+default['papertrail']['port'] = "CHANGE ME"
 default['papertrail']['resume_retry_count'] = -1
 default['papertrail']['syslog_selector'] = '*.*'
 default['papertrail']['queue_disk_space'] = '100M'
